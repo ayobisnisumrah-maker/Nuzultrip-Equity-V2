@@ -57,7 +57,7 @@ const SCENARIOS: Record<'konservatif' | 'moderat' | 'optimis', ScenarioConfig> =
 
 const UNIT_PRICE = 100_000_000; // Rp 100 Juta
 const OWNERSHIP_PER_UNIT = 0.8; // 0.8%
-const maxUnits = 25; // Sesuai ketersediaan alokasi penawaran
+const DEFAULT_MAX_UNITS = 25; // Sesuai ketersediaan alokasi penawaran
 
 const formatCompactIdr = (value: number) => {
   if (Math.abs(value) >= 1_000_000_000) {
@@ -79,7 +79,7 @@ export const EquityRoiCalculator: React.FC<EquityRoiCalculatorProps> = ({ onOpen
   const [viewMode, setViewMode] = useState<'ringkasan' | 'proyeksi5thn'>('ringkasan');
   const [unitPrice, setUnitPrice] = useState(UNIT_PRICE);
   const [ownershipPerUnit, setOwnershipPerUnit] = useState(OWNERSHIP_PER_UNIT);
-  const [maxUnits, setMaxUnits] = useState(maxUnits);
+  const [maxUnits, setMaxUnits] = useState(DEFAULT_MAX_UNITS);
   const [scenarioConfig, setScenarioConfig] = useState(SCENARIOS);
   const [officialInfoUrl, setOfficialInfoUrl] = useState('https://www.nuzultrip.click');
 
