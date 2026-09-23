@@ -1,4 +1,4 @@
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { supabase, appSchema, isSupabaseConfigured } from '../lib/supabase';
 import { InvestorProfile, InvestorReport, DividendRecord, INVESTOR_REPORTS, DEMO_DIVIDENDS } from '../data/investorData';
 
 export interface CashierTransaction {
@@ -274,6 +274,7 @@ class RealtimeStore {
   private auditLogs: AuditLogItem[] = [];
   private messages: InquiryMessage[] = [];
   private investorProfile: InvestorProfile | null = null;
+  private investorHoldings: Array<{ id: string; units: number; unitPrice: number }> = [];
   private channel: any = null;
 
   constructor() {
@@ -546,6 +547,10 @@ class RealtimeStore {
       if (!investorResult.error && investorResult.data) {
         const investor: any = investorResult.data;
         const holdings = !holdingsResult.error ? holdingsResult.data || [] : [];
+        this.investorHoldings = holdings.map((h: any) => {
+          const offering = Array.isArray(h.ownership_offerings) ? h.ownership_offerings[0] : h.ownership_offerings;
+          return { id: h.id, units: Number(h.units || 0), unitPrice: Number(offering?.unit_price || 0) };
+        });
         const unitsOwned = holdings.reduce((sum: number, h: any) => sum + Number(h.units || 0), 0);
         const ownershipBps = holdings.reduce((sum: number, h: any) => sum + Number(h.ownership_bps || 0), 0);
         const totalInvestment = holdings.reduce((sum: number, h: any) => {
@@ -582,6 +587,7 @@ class RealtimeStore {
         };
       } else {
         this.investorProfile = null;
+        this.investorHoldings = [];
       }
 
       this.saveToStorage();
@@ -857,32 +863,55 @@ class RealtimeStore {
   public async createTransferRequest(
     req: Omit<ShareTransferRequest, 'id' | 'createdAt' | 'status'>
   ): Promise<ShareTransferRequest> {
-    const now = new Date();
-    const newId = `REQ-${Date.now().toString(36).toUpperCase()}`;
-    const newReq: ShareTransferRequest = {
+    if (!appSchema || !supabase || !isSupabaseConfigured) {
+      throw new Error('Koneksi Supabase production belum tersedia.');
+    }
+
+    const holding = this.investorHoldings.find((h) => h.units >= req.units);
+    if (!holding) {
+      throw new Error('Tidak ada kepemilikan aktif dengan unit yang cukup untuk pengajuan ini.');
+    }
+
+    let requestId: string | null = null;
+    let error: any = null;
+
+    if (req.type === 'sale') {
+      const result = await appSchema.rpc('create_ownership_sale_request', {
+        p_holding_id: holding.id,
+        p_units: req.units,
+        p_requested_unit_price: req.unitPrice || holding.unitPrice,
+        p_notes: req.saleReason || null,
+      });
+      requestId = result.data as string | null;
+      error = result.error;
+    } else {
+      const notes = [
+        req.heirRelationship ? `Hubungan: ${req.heirRelationship}` : null,
+        req.legalDocNumber ? `Dokumen: ${req.legalDocNumber}` : null,
+        req.inheritanceNotes || null,
+      ].filter(Boolean).join(' | ');
+      const result = await appSchema.rpc('create_ownership_inheritance_request', {
+        p_holding_id: holding.id,
+        p_beneficiary_name: req.heirName || '',
+        p_beneficiary_email: req.heirEmail || null,
+        p_beneficiary_phone: req.heirPhone || null,
+        p_units: req.units,
+        p_notes: notes || null,
+      });
+      requestId = result.data as string | null;
+      error = result.error;
+    }
+
+    if (error) throw new Error(error.message || 'Pengajuan gagal diproses.');
+    await this.refreshFromProduction();
+
+    const synced = this.requests.find((r) => r.id === requestId);
+    return synced || {
       ...req,
-      id: newId,
+      id: requestId || `REQ-${Date.now().toString(36).toUpperCase()}`,
       status: 'Menunggu Verifikasi',
-      createdAt: now.toLocaleString('id-ID'),
+      createdAt: new Date().toISOString(),
     };
-
-    this.requests = [newReq, ...this.requests];
-    this.saveToStorage();
-    this.notify();
-
-    // Log to audit
-    this.addAuditLog({
-      action: newReq.type === 'sale' ? 'Permohonan Jual Saham' : 'Permohonan Pewarisan Saham',
-      category: 'KEPEMILIKAN',
-      user: newReq.investorName,
-      details:
-        newReq.type === 'sale'
-          ? `Pengajuan penjualan kembali ${newReq.units} unit saham senilai Rp ${newReq.totalValue.toLocaleString('id-ID')}`
-          : `Pengajuan pewarisan ${newReq.units} unit saham kepada ${newReq.heirName} (${newReq.heirRelationship})`,
-      status: 'warning',
-    });
-
-    return newReq;
   }
 
   public async updateTransferRequestStatus(
@@ -890,36 +919,32 @@ class RealtimeStore {
     status: ShareTransferRequest['status'],
     adminNotes?: string
   ): Promise<boolean> {
-    const idx = this.requests.findIndex((r) => r.id === id);
-    if (idx === -1) return false;
-
-    this.requests[idx] = {
-      ...this.requests[idx],
-      status,
-      adminNotes: adminNotes || this.requests[idx].adminNotes,
-    };
-
-    const targetReq = this.requests[idx];
-
-    // If sale approved, return units to available units
-    if (status === 'Disetujui' && targetReq.type === 'sale') {
-      this.portalSettings.availableUnits = Math.min(
-        this.portalSettings.totalUnits,
-        this.portalSettings.availableUnits + targetReq.units
-      );
+    if (!appSchema || !supabase || !isSupabaseConfigured) {
+      throw new Error('Koneksi Supabase production belum tersedia.');
     }
 
-    this.saveToStorage();
-    this.notify();
+    const target = this.requests.find((r) => r.id === id);
+    if (!target) return false;
 
-    this.addAuditLog({
-      action: `Status Pengajuan #${targetReq.id} diubah ke ${status}`,
-      category: 'KEPEMILIKAN',
-      user: 'ayobisnisumrah@gmail.com',
-      details: `Persetujuan transaksi kepemilikan investor ${targetReq.investorName}. Catatan: ${adminNotes || '-'}`,
-      status: status === 'Disetujui' ? 'success' : 'info',
-    });
+    let error: any = null;
+    if (status === 'Disetujui') {
+      const result = target.type === 'sale'
+        ? await appSchema.rpc('approve_ownership_sale', { p_transfer_id: id })
+        : await appSchema.rpc('approve_ownership_inheritance', { p_request_id: id });
+      error = result.error;
+    } else if (status === 'Ditolak') {
+      const reason = adminNotes?.trim();
+      if (!reason) throw new Error('Alasan penolakan wajib diisi.');
+      const result = target.type === 'sale'
+        ? await appSchema.rpc('reject_ownership_sale', { p_transfer_id: id, p_reason: reason })
+        : await appSchema.rpc('reject_ownership_inheritance', { p_request_id: id, p_reason: reason });
+      error = result.error;
+    } else {
+      throw new Error('Perubahan status ini harus diproses melalui workflow kepemilikan production.');
+    }
 
+    if (error) throw new Error(error.message || 'Status pengajuan gagal diperbarui.');
+    await this.refreshFromProduction();
     return true;
   }
 
