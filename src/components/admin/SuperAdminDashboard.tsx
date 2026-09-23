@@ -67,7 +67,7 @@ import { MessagesInquiriesView } from './MessagesInquiriesView';
 import { FinancialManagementView } from './FinancialManagementView';
 import { SystemIntegrationsView } from './SystemIntegrationsView';
 import { isSupabaseConfigured } from '../../lib/supabase';
-import { AdminAccess, loadAdminAccess } from '../../services/adminAccessService';\nimport { PublicDocumentManager } from './PublicDocumentManager';
+import { AdminAccess, loadAdminAccess } from '../../services/adminAccessService';\nimport { PublicDocumentManager } from './PublicDocumentManager';\nimport { PortalSectionEditor } from './PortalSectionEditor';
 import { provisioningService } from '../../services/provisioningService';
 
 interface SuperAdminDashboardProps {
@@ -1068,6 +1068,9 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
 
         {/* CONTENT BODY */}
         <main className="p-4 sm:p-8 space-y-6 max-w-7xl w-full mx-auto">
+          {/* VIEW: PORTAL CMS — editor konten saja; layout publik V2 tetap dipertahankan */}
+          {activeNav === 'portal' && adminAccess?.canViewPortal && <PortalSectionEditor />}
+
           {/* VIEW: KASIR & INVOICE */}
           {activeNav === 'kasir_invoice' && <CashierInvoiceView />}
 
