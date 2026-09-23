@@ -344,6 +344,13 @@ class RealtimeStore {
     if (!supabase || !isSupabaseConfigured) return;
 
     try {
+      const { data: authData } = await supabase.auth.getUser();
+      const authUserId = authData.user?.id ?? null;
+      if (!authUserId) {
+        this.investorProfile = null;
+        this.investorHoldings = [];
+        return;
+      }
       // Production is authoritative. localStorage is only a temporary UI cache/fallback.
       const [
         reportsResult,
@@ -389,11 +396,12 @@ class RealtimeStore {
         supabase
           .from('investors')
           .select('id,reference_code,status,legal_name,whatsapp_number,bank_name,bank_account_name,bank_account_number,activated_at,approved_at,created_at')
-          .limit(1)
+          .eq('id', authUserId)
           .maybeSingle(),
         supabase
           .from('ownership_holdings')
           .select('id,units,ownership_bps,acquisition_at,status,ownership_offerings(unit_price)')
+          .eq('investor_id', authUserId)
           .eq('status', 'active'),
       ]);
 
@@ -564,7 +572,6 @@ class RealtimeStore {
         const pendingDividend = this.dividends
           .filter((d) => d.status !== 'Berhasil')
           .reduce((sum, d) => sum + d.totalNet, 0);
-        const { data: authData } = await supabase.auth.getUser();
         this.investorProfile = {
           id: investor.reference_code || investor.id,
           name: investor.legal_name || authData.user?.email || 'Investor',
