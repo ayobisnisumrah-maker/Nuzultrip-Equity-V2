@@ -1807,12 +1807,12 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
                     <span className="text-slate-700 font-medium">
-                      Realtime Storage Service: <strong>Aktif & Sinkron (LocalStorage + Memory Store)</strong>
+                      Realtime Data Service: <strong>Supabase Production sebagai sumber data utama</strong>
                     </span>
                   </div>
                   <div className="text-[11px] text-slate-500">
                     {isSupabaseConfigured
-                      ? 'Supabase backend terhubung secara realtime.'
+                      ? 'Supabase production terhubung; dashboard memantau perubahan data secara realtime.'
                       : 'Menggunakan real-time client-side synchronization engine.'}
                   </div>
                 </div>
