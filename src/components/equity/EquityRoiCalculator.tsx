@@ -435,9 +435,11 @@ Info resmi: nuzultrip.com/equity`;
                     Rutin / Bulan
                   </span>
                 </div>
-                <div className="text-[28px] sm:text-[34px] font-extrabold text-white tracking-tight leading-none">
-                  Rp {monthlyDividend.toLocaleString('id-ID')}
-                  <span className="text-[13px] sm:text-[14px] font-normal text-white/60 ml-1.5">
+                <div className="flex flex-wrap items-baseline gap-1.5 font-extrabold text-white tracking-tight leading-tight">
+                  <span className="text-[24px] sm:text-[32px]">
+                    Rp {monthlyDividend.toLocaleString('id-ID')}
+                  </span>
+                  <span className="text-[13px] sm:text-[14px] font-normal text-white/60">
                     / bulan
                   </span>
                 </div>
