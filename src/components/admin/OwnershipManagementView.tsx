@@ -87,6 +87,9 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
       setSelectedReq(null);
       setActionNotes('');
       setTimeout(() => setFeedback(null), 4000);
+    } catch (error) {
+      setFeedback(error instanceof Error ? error.message : 'Pengajuan gagal diperbarui.');
+      setTimeout(() => setFeedback(null), 5000);
     } finally {
       setIsProcessing(false);
     }
@@ -322,16 +325,6 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
                     >
                       <CheckCircle2 size={14} />
                       <span>Setujui</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      disabled={isProcessing || req.status === 'Diproses Notaris'}
-                      onClick={() => handleUpdateStatus(req.id, 'Diproses Notaris')}
-                      className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-xs cursor-pointer"
-                    >
-                      <ShieldCheck size={14} />
-                      <span>Proses Notaris</span>
                     </button>
 
                     <button
