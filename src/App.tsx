@@ -26,11 +26,22 @@ import { supabase } from './lib/supabase';
 
 export default function App() {
   useEffect(() => {
+    if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
     if (window.location.hash) {
       window.history.replaceState(null, '', window.location.pathname + window.location.search);
     }
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-    requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: 'auto' }));
+    const forceTop = () => window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    forceTop();
+    requestAnimationFrame(forceTop);
+    const t1 = window.setTimeout(forceTop, 50);
+    const t2 = window.setTimeout(forceTop, 250);
+    const onLoad = () => forceTop();
+    window.addEventListener('load', onLoad, { once: true });
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      window.removeEventListener('load', onLoad);
+    };
   }, []);
 
   const [currentView, setCurrentView] = useState<'landing' | 'dashboard' | 'super_admin'>('landing');
@@ -293,7 +304,6 @@ export default function App() {
         onOpenInterest={() => handleOpenInterest(1)}
         onOpenPitchdeck={() => setIsPitchdeckModalOpen(true)}
         onOpenDetail={handleOpenFooterDetail}
-        onOpenSuperAdmin={() => void openAdmin()}
       />
 
       {/* Interactive Modals */}
