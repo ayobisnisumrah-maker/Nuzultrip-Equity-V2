@@ -156,16 +156,16 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
 
   // Report form inputs
   const [repTitle, setRepTitle] = useState('');
-  const [repPeriod, setRepPeriod] = useState('Kuartal III 2026');
+  const [repPeriod, setRepPeriod] = useState('Periode keuangan aktif');
   const [repCategory, setRepCategory] = useState<
     'keuangan' | 'operasional' | 'bagi_hasil' | 'legalitas'
   >('keuangan');
-  const [repAuditor, setRepAuditor] = useState('KAP Hendrawan & Rekan (Chartered Accountants)');
+  const [repAuditor, setRepAuditor] = useState('');
   const [repSummary, setRepSummary] = useState('');
-  const [repHl1Label, setRepHl1Label] = useState('Omzet Konsolidasi');
-  const [repHl1Val, setRepHl1Val] = useState('Rp 5,4 Miliar');
-  const [repHl2Label, setRepHl2Label] = useState('Laba Bersih');
-  const [repHl2Val, setRepHl2Val] = useState('Rp 1,12 Miliar');
+  const [repHl1Label, setRepHl1Label] = useState('');
+  const [repHl1Val, setRepHl1Val] = useState('');
+  const [repHl2Label, setRepHl2Label] = useState('');
+  const [repHl2Val, setRepHl2Val] = useState('');
 
   // CMS inputs
   const [cmsHeadline, setCmsHeadline] = useState(portalSettings.heroHeadline);
@@ -218,26 +218,30 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
 
     const total = txType === 'equity_purchase' ? equityUnits * 100000000 : customAmount;
 
-    const newTx = await realtimeStore.createTransaction({
-      transactionType: txType,
-      customerName,
-      customerPhone,
-      customerEmail: customerEmail || 'investor@nuzultrip.com',
-      unitsCount: txType === 'equity_purchase' ? equityUnits : undefined,
-      amountTotal: total,
-      paymentMethod,
-      paymentStatus: 'Lunas',
-      notes: txNotes || `Pembayaran resmi kasir Nuzultrip`,
-      createdBy: 'Super Admin',
-    });
+    try {
+      const newTx = await realtimeStore.createTransaction({
+        transactionType: txType,
+        customerName,
+        customerPhone,
+        customerEmail: customerEmail || '',
+        unitsCount: txType === 'equity_purchase' ? equityUnits : undefined,
+        amountTotal: total,
+        paymentMethod,
+        paymentStatus: 'Lunas',
+        notes: txNotes || 'Pembayaran resmi kasir Nuzultrip',
+        createdBy: 'Super Admin',
+      });
 
-    setShowKasirModal(false);
-    setSelectedReceipt(newTx);
-    setCustomerName('');
-    setCustomerPhone('');
-    setCustomerEmail('');
-    setTxNotes('');
-    triggerAlert('✅ Transaksi berhasil dicatat dan masuk ke buku arus kas realtime perseroan.');
+      setShowKasirModal(false);
+      setSelectedReceipt(newTx);
+      setCustomerName('');
+      setCustomerPhone('');
+      setCustomerEmail('');
+      setTxNotes('');
+      triggerAlert('Transaksi berhasil dicatat ke finance production.');
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Transaksi gagal diproses.');
+    }
   };
 
   // Submit New Report
@@ -255,27 +259,31 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
       year: 'numeric',
     });
 
-    await realtimeStore.addReport({
-      title: repTitle,
-      period: repPeriod,
-      date: dateFormatted,
-      category: repCategory,
-      summary: repSummary,
-      contentDetails: repSummary,
-      auditor: repAuditor,
-      fileSize: '2.8 MB',
-      fileType: 'PDF',
-      isNew: true,
-      highlights: [
-        { label: repHl1Label, value: repHl1Val },
-        { label: repHl2Label, value: repHl2Val },
-      ],
-    });
+    try {
+      await realtimeStore.addReport({
+        title: repTitle,
+        period: repPeriod,
+        date: dateFormatted,
+        category: repCategory,
+        summary: repSummary,
+        contentDetails: repSummary,
+        auditor: repAuditor || undefined,
+        fileSize: '-',
+        fileType: 'DIGITAL',
+        isNew: true,
+        highlights: [
+          ...(repHl1Label && repHl1Val ? [{ label: repHl1Label, value: repHl1Val }] : []),
+          ...(repHl2Label && repHl2Val ? [{ label: repHl2Label, value: repHl2Val }] : []),
+        ],
+      });
 
-    setShowAddReportModal(false);
-    setRepTitle('');
-    setRepSummary('');
-    triggerAlert('✅ Laporan resmi berhasil diterbitkan ke Portal Investor secara realtime.');
+      setShowAddReportModal(false);
+      setRepTitle('');
+      setRepSummary('');
+      triggerAlert('Draft laporan resmi berhasil dibuat di financial reporting production.');
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Laporan gagal dibuat.');
+    }
   };
 
   const handleSaveCMS = (e: React.FormEvent) => {
