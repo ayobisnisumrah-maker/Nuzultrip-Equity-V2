@@ -217,7 +217,6 @@ export default function App() {
     return (
       <InvestorDashboard
         onBackToHome={() => setCurrentView('landing')}
-        onOpenSuperAdmin={() => void openAdmin()}
         onLogout={() => void logout()}
       />
     );
