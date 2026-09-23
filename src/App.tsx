@@ -25,6 +25,14 @@ import { resolveSessionAccess, secureLogout, type SessionAccess } from './servic
 import { supabase } from './lib/supabase';
 
 export default function App() {
+  useEffect(() => {
+    if (window.location.hash) {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: 'auto' }));
+  }, []);
+
   const [currentView, setCurrentView] = useState<'landing' | 'dashboard' | 'super_admin'>('landing');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [access, setAccess] = useState<SessionAccess>({authenticated:false,isAdmin:false,isInvestor:false,investorStatus:null});
