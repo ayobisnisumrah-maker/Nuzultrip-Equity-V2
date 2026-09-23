@@ -317,7 +317,7 @@ export const InvestorDashboard: React.FC<InvestorDashboardProps> = ({
                 <ShieldCheck size={15} className="text-emerald-400" />
               </div>
               <div className="text-xl sm:text-2xl font-black text-white">
-                {formatRupiah(investor?.totalInvestment)}
+                {formatRupiah(investor?.totalInvestment ?? 0)}
               </div>
               <div className="text-[11px] text-slate-400 font-medium mt-1">
                 Terdaftar di Kemenkumham RI
@@ -331,7 +331,7 @@ export const InvestorDashboard: React.FC<InvestorDashboardProps> = ({
                 <TrendingUp size={15} className="text-emerald-400" />
               </div>
               <div className="text-xl sm:text-2xl font-black text-emerald-400">
-                {formatRupiah(investor?.totalDividendsReceived)}
+                {formatRupiah(investor?.totalDividendsReceived ?? 0)}
               </div>
               <div className="text-[11px] text-slate-300 font-medium mt-1">
                 Akumulasi sejak {investor?.joinDate}
@@ -345,7 +345,7 @@ export const InvestorDashboard: React.FC<InvestorDashboardProps> = ({
                 <Calendar size={15} className="text-emerald-400" />
               </div>
               <div className="text-xl sm:text-2xl font-black text-white">
-                {formatRupiah(investor?.pendingDividend)}
+                {formatRupiah(investor?.pendingDividend ?? 0)}
               </div>
               <div className="text-[11px] text-emerald-400 font-medium mt-1">
                 Est. Cair: {investor?.nextDividendDate}
@@ -674,7 +674,7 @@ export const InvestorDashboard: React.FC<InvestorDashboardProps> = ({
                   Total Terakumulasi
                 </span>
                 <span className="text-xl sm:text-2xl font-black text-emerald-600">
-                  {formatRupiah(investor?.totalDividendsReceived)}
+                  {formatRupiah(investor?.totalDividendsReceived ?? 0)}
                 </span>
               </div>
             </div>
