@@ -18,9 +18,13 @@ import { EquityInterestModal } from './components/modals/EquityInterestModal';
 import { PitchdeckModal } from './components/modals/PitchdeckModal';
 import { LoginModal } from './components/modals/LoginModal';
 import { DetailInfoModal } from './components/modals/DetailInfoModal';
+import { InvestorDashboard } from './components/dashboard/InvestorDashboard';
+import { SuperAdminDashboard } from './components/admin/SuperAdminDashboard';
 import { ServiceItem, InvestorInfoItem, ArticleItem } from './data/landingData';
 
 export default function App() {
+  const [currentView, setCurrentView] = useState<'landing' | 'dashboard' | 'super_admin'>('landing');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isInterestModalOpen, setIsInterestModalOpen] = useState(false);
   const [selectedUnits, setSelectedUnits] = useState<number>(1);
   const [isPitchdeckModalOpen, setIsPitchdeckModalOpen] = useState(false);
@@ -181,12 +185,38 @@ export default function App() {
     });
   };
 
+  if (currentView === 'super_admin') {
+    return (
+      <SuperAdminDashboard
+        onBackToHome={() => setCurrentView('landing')}
+        onOpenInvestorPortal={() => setCurrentView('dashboard')}
+        onLogout={() => setCurrentView('landing')}
+      />
+    );
+  }
+
+  if (currentView === 'dashboard') {
+    return (
+      <InvestorDashboard
+        onBackToHome={() => setCurrentView('landing')}
+        onOpenSuperAdmin={() => setCurrentView('super_admin')}
+        onLogout={() => {
+          setIsLoggedIn(false);
+          setCurrentView('landing');
+        }}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F5F5F3] text-[#111111] flex flex-col selection:bg-[#090909] selection:text-white">
       {/* Sticky Header */}
       <Header
         onOpenLogin={() => setIsLoginModalOpen(true)}
         onOpenInterest={() => handleOpenInterest(1)}
+        isLoggedIn={isLoggedIn}
+        onOpenDashboard={() => setCurrentView('dashboard')}
+        onOpenSuperAdmin={() => setCurrentView('super_admin')}
       />
 
       {/* Main Content Sections */}
@@ -242,6 +272,7 @@ export default function App() {
         onOpenInterest={() => handleOpenInterest(1)}
         onOpenPitchdeck={() => setIsPitchdeckModalOpen(true)}
         onOpenDetail={handleOpenFooterDetail}
+        onOpenSuperAdmin={() => setCurrentView('super_admin')}
       />
 
       {/* Interactive Modals */}
@@ -260,6 +291,13 @@ export default function App() {
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
         onOpenInterest={() => setIsInterestModalOpen(true)}
+        onSuccessLogin={() => {
+          setIsLoggedIn(true);
+          setCurrentView('dashboard');
+        }}
+        onSuccessAdminLogin={() => {
+          setCurrentView('super_admin');
+        }}
       />
 
       <DetailInfoModal

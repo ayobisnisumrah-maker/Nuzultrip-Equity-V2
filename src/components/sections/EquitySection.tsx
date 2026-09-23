@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container } from '../layout/Container';
 import { Eyebrow } from '../ui/Eyebrow';
 import { ArrowButton } from '../ui/ArrowButton';
 import { AnimatedNumber } from '../ui/AnimatedNumber';
 import { EquityRoiCalculator } from '../equity/EquityRoiCalculator';
-import { EQUITY_METRICS, IMAGES } from '../../data/landingData';
+import { EQUITY_METRICS, IMAGES, StatisticItem } from '../../data/landingData';
+import { realtimeStore, PortalSettings } from '../../services/realtimeStore';
 
 interface EquitySectionProps {
   onOpenInterest: (units?: number) => void;
@@ -15,6 +16,59 @@ export const EquitySection: React.FC<EquitySectionProps> = ({
   onOpenInterest,
   onOpenDetail,
 }) => {
+  const [settings, setSettings] = useState<PortalSettings>(() =>
+    realtimeStore.getPortalSettings()
+  );
+
+  useEffect(() => {
+    const update = () => {
+      setSettings(realtimeStore.getPortalSettings());
+    };
+    const unsub = realtimeStore.subscribe(update);
+    return () => unsub();
+  }, []);
+
+  const dynamicMetrics: StatisticItem[] = [
+    {
+      id: 'porsi-ditawarkan',
+      value: settings.equityPercentage || 40,
+      suffix: '%',
+      label: 'Porsi kepemilikan yang ditawarkan',
+    },
+    {
+      id: 'total-unit',
+      value: settings.totalUnits || 50,
+      suffix: ' Unit',
+      label: 'Total unit equity yang ditawarkan',
+    },
+    {
+      id: 'porsi-per-unit',
+      value: Number(((settings.equityPercentage || 40) / (settings.totalUnits || 50)).toFixed(2)),
+      suffix: '%',
+      decimals: 1,
+      label: 'Porsi kepemilikan per unit',
+    },
+    {
+      id: 'nilai-per-unit',
+      value: Math.round((settings.pricePerUnit || 100000000) / 1000000),
+      prefix: 'Rp.',
+      suffix: ' Juta',
+      label: 'Nilai per unit equity',
+    },
+    {
+      id: 'total-nilai',
+      value: Number((((settings.totalUnits || 50) * (settings.pricePerUnit || 100000000)) / 1000000000).toFixed(1)),
+      prefix: 'Rp.',
+      suffix: ' Miliar',
+      label: 'Total Nilai Penawaran',
+    },
+    {
+      id: 'periode-distribusi',
+      value: 0,
+      customDisplay: 'Bulanan',
+      label: 'Periode distribusi hasil',
+    },
+  ];
   return (
     <section
       id="peluang"
@@ -58,11 +112,11 @@ export const EquitySection: React.FC<EquitySectionProps> = ({
 
           {/* Column 2: 6 Metrics Point - Dibuat Vertikal Setinggi Gambar Mengikuti Hierarki Space */}
           <div className="lg:col-span-4 flex flex-col justify-between h-full py-1 min-h-[420px] sm:min-h-[480px]">
-            {EQUITY_METRICS.map((item, index) => (
+            {dynamicMetrics.map((item, index) => (
               <div
                 key={item.id}
                 className={`flex items-baseline justify-between gap-4 pb-3 sm:pb-3.5 ${
-                  index < EQUITY_METRICS.length - 1 ? 'border-b border-black/[0.1]' : ''
+                  index < dynamicMetrics.length - 1 ? 'border-b border-black/[0.1]' : ''
                 } group`}
               >
                 <div className="text-[26px] sm:text-[30px] lg:text-[32px] font-extrabold text-[#111111] tracking-tight leading-none shrink-0 group-hover:translate-x-0.5 transition-transform duration-200">

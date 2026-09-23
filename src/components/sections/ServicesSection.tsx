@@ -1,15 +1,32 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Compass, Globe, Building2, Luggage, ArrowRight } from 'lucide-react';
 import { Container } from '../layout/Container';
 import { Eyebrow } from '../ui/Eyebrow';
 import { ArrowButton } from '../ui/ArrowButton';
 import { SERVICES_LIST, ServiceItem } from '../../data/landingData';
+import { realtimeStore, PortalSettings } from '../../services/realtimeStore';
 
 interface ServicesSectionProps {
   onOpenServiceDetail: (service: ServiceItem) => void;
 }
 
 export const ServicesSection: React.FC<ServicesSectionProps> = ({ onOpenServiceDetail }) => {
+  const [settings, setSettings] = useState<PortalSettings>(() =>
+    realtimeStore.getPortalSettings()
+  );
+
+  useEffect(() => {
+    const update = () => {
+      setSettings(realtimeStore.getPortalSettings());
+    };
+    const unsub = realtimeStore.subscribe(update);
+    return () => unsub();
+  }, []);
+
+  const activeServices: ServiceItem[] = (settings.servicesList && settings.servicesList.length > 0)
+    ? (settings.servicesList as any)
+    : SERVICES_LIST;
+
   const getIcon = (iconName: string) => {
     const iconClass = "transition-colors duration-200 text-[#111111] group-hover:text-white";
     switch (iconName) {
@@ -62,7 +79,7 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({ onOpenServiceD
           {/* Right Column: 2x2 Services Grid */}
           <div className="lg:col-span-8 flex flex-col justify-between">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
-              {SERVICES_LIST.map((service) => (
+              {activeServices.map((service) => (
                 <div
                   key={service.id}
                   onClick={() => onOpenServiceDetail(service)}

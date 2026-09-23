@@ -1,10 +1,23 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container } from '../layout/Container';
 import { Eyebrow } from '../ui/Eyebrow';
 import { AnimatedNumber } from '../ui/AnimatedNumber';
 import { ABOUT_METRICS } from '../../data/landingData';
+import { realtimeStore, PortalSettings } from '../../services/realtimeStore';
 
 export const AboutSection: React.FC = () => {
+  const [settings, setSettings] = useState<PortalSettings>(() =>
+    realtimeStore.getPortalSettings()
+  );
+
+  useEffect(() => {
+    const update = () => {
+      setSettings(realtimeStore.getPortalSettings());
+    };
+    const unsub = realtimeStore.subscribe(update);
+    return () => unsub();
+  }, []);
+
   return (
     <section
       id="tentang"
@@ -15,9 +28,18 @@ export const AboutSection: React.FC = () => {
         <div className="text-center max-w-[860px] mx-auto mb-12 sm:mb-16 flex flex-col items-center">
           <Eyebrow>TENTANG KAMI</Eyebrow>
           <h2 className="font-h2 font-bold text-[#111111] leading-[1.18] tracking-tight max-w-[820px] text-center">
-            Menghadirkan Inovasi Teknologi<br className="hidden sm:inline" />
-            dengan Integrasi Berkelanjutan
+            {settings.aboutTitle || (
+              <>
+                Menghadirkan Inovasi Teknologi<br className="hidden sm:inline" />
+                dengan Integrasi Berkelanjutan
+              </>
+            )}
           </h2>
+          {settings.aboutDescription && (
+            <p className="mt-4 text-[15px] sm:text-[16px] text-[#555555] max-w-2xl text-center leading-relaxed">
+              {settings.aboutDescription}
+            </p>
+          )}
         </div>
 
         {/* Outline Grid System - Semua tulisan rata tengah, garis pemisah sejajar */}

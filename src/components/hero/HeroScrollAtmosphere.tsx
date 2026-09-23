@@ -17,7 +17,7 @@ export const HeroScrollAtmosphere: React.FC<HeroScrollAtmosphereProps> = ({ scro
     scrollVelocityRef.current = Math.max(-20, Math.min(20, delta));
   }, [scrollY]);
 
-  // Gentle, eye-friendly constellation canvas
+  // Gentle, eye-friendly constellation canvas behind the text
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -36,7 +36,7 @@ export const HeroScrollAtmosphere: React.FC<HeroScrollAtmosphereProps> = ({ scro
     window.addEventListener('resize', handleResize);
 
     // Warm, soothing particle nodes
-    const particleCount = Math.min(Math.floor(width / 32), 40);
+    const particleCount = Math.min(Math.floor(width / 34), 38);
     const particles: Array<{
       x: number;
       y: number;
@@ -130,33 +130,33 @@ export const HeroScrollAtmosphere: React.FC<HeroScrollAtmosphereProps> = ({ scro
     };
   }, []);
 
-  // Parallax mathematical calculations based on scroll position
+  // Parallax calculations based on scroll position
   const scrollProgress = Math.min(Math.max(scrollY / 700, 0), 1);
-  const arcRotate1 = scrollY * 0.035;
-  const arcRotate2 = -scrollY * 0.025;
-  const arcScale = 1 + scrollProgress * 0.09;
-  const arcY = scrollY * 0.28;
+  const arcRotate1 = scrollY * 0.04;
+  const arcRotate2 = -scrollY * 0.03;
+  const arcScale = 1 + scrollProgress * 0.08;
+  const arcY = scrollY * 0.22;
   const gridOffsetY = (scrollY * 0.35) % 40;
 
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden z-0" aria-hidden="true">
-      {/* 1. Base Layer: Calming Executive Deep Slate-Graphite (Not pitch-black, zero eye-strain) */}
+      {/* 1. Base Layer: Calming Executive Deep Slate-Graphite */}
       <div
         className="absolute inset-0"
         style={{
           background:
-            'radial-gradient(ellipse 130% 90% at 50% 15%, #182230 0%, #111822 55%, #0d141d 100%)',
+            'radial-gradient(ellipse 130% 90% at 50% 25%, #182230 0%, #111822 55%, #0d141d 100%)',
         }}
       />
 
-      {/* 2. Soft Ambient Forest & Emerald Glow (Warm & soothing, no harsh glare) */}
+      {/* 2. Soft Ambient Glow Centered DIRECTLY Behind the Headline Text */}
       <div
-        className="absolute w-[850px] h-[520px] -top-[100px] left-1/2 -translate-x-1/2 rounded-full blur-[110px] will-change-transform pointer-events-none"
+        className="absolute w-[90vw] max-w-[750px] h-[360px] top-[36%] sm:top-[38%] left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full blur-[100px] will-change-transform pointer-events-none"
         style={{
           opacity: Math.max(0.35, 1 - scrollProgress * 0.6),
-          transform: `translate3d(-50%, ${arcY * 0.4}px, 0) scale(${1 + scrollProgress * 0.12})`,
+          transform: `translate3d(-50%, calc(-50% + ${arcY * 0.3}px), 0) scale(${1 + scrollProgress * 0.1})`,
           background:
-            'radial-gradient(50% 50% at 50% 50%, rgba(16, 185, 129, 0.14) 0%, rgba(13, 148, 136, 0.08) 50%, transparent 100%)',
+            'radial-gradient(50% 50% at 50% 50%, rgba(16, 185, 129, 0.16) 0%, rgba(13, 148, 136, 0.08) 50%, transparent 100%)',
           transition: 'transform 0.1s ease-out',
         }}
       />
@@ -167,39 +167,40 @@ export const HeroScrollAtmosphere: React.FC<HeroScrollAtmosphereProps> = ({ scro
         className="absolute inset-0 z-[1] will-change-transform"
         style={{
           opacity: Math.max(0.4, 1 - scrollProgress * 0.6),
-          transform: `translate3d(0, ${-scrollY * 0.12}px, 0)`,
+          transform: `translate3d(0, ${-scrollY * 0.1}px, 0)`,
         }}
       />
 
-      {/* 4. Concentric Orbital Arcs with Dual-Direction Rotation on Scroll */}
+      {/* 4. Concentric Orbital Arcs Centered DIRECTLY Behind the Headline Text (Fully Responsive) */}
       <div
-        className="absolute left-1/2 -translate-x-1/2 w-[1300px] h-[650px] bottom-[-220px] sm:bottom-[-180px] z-[2] will-change-transform"
+        className="absolute left-1/2 -translate-x-1/2 top-[34%] sm:top-[37%] -translate-y-1/2 w-[94vw] max-w-[1100px] aspect-[16/9] sm:aspect-[2/1] z-[2] will-change-transform pointer-events-none"
         style={{
-          transform: `translate3d(-50%, ${arcY}px, 0) scale(${arcScale})`,
-          opacity: Math.max(0.3, 1 - scrollProgress * 0.7),
+          transform: `translate3d(-50%, calc(-50% + ${arcY}px), 0) scale(${arcScale})`,
+          opacity: Math.max(0.35, 1 - scrollProgress * 0.7),
           transition: 'transform 0.1s ease-out',
         }}
       >
         <svg
-          viewBox="0 0 1300 650"
+          viewBox="0 0 1000 500"
           className="w-full h-full overflow-visible"
           fill="none"
+          preserveAspectRatio="xMidYMid meet"
           xmlns="http://www.w3.org/2000/svg"
         >
           <defs>
             <linearGradient id="soft-arc-outer" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#10b981" stopOpacity="0" />
-              <stop offset="20%" stopColor="#10b981" stopOpacity="0.35" />
-              <stop offset="50%" stopColor="#34d399" stopOpacity="0.8" />
-              <stop offset="80%" stopColor="#10b981" stopOpacity="0.35" />
+              <stop offset="20%" stopColor="#10b981" stopOpacity="0.4" />
+              <stop offset="50%" stopColor="#34d399" stopOpacity="0.85" />
+              <stop offset="80%" stopColor="#10b981" stopOpacity="0.4" />
               <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
             </linearGradient>
 
             <linearGradient id="soft-arc-inner" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#34d399" stopOpacity="0" />
-              <stop offset="30%" stopColor="#6ee7b7" stopOpacity="0.5" />
+              <stop offset="25%" stopColor="#6ee7b7" stopOpacity="0.6" />
               <stop offset="50%" stopColor="#a7f3d0" stopOpacity="0.95" />
-              <stop offset="70%" stopColor="#6ee7b7" stopOpacity="0.5" />
+              <stop offset="75%" stopColor="#6ee7b7" stopOpacity="0.6" />
               <stop offset="100%" stopColor="#34d399" stopOpacity="0" />
             </linearGradient>
 
@@ -212,65 +213,94 @@ export const HeroScrollAtmosphere: React.FC<HeroScrollAtmosphereProps> = ({ scro
             </filter>
           </defs>
 
-          {/* Gentle Ambient Background Aura */}
+          {/* Gentle Ambient Background Halo */}
           <ellipse
-            cx="650"
-            cy="480"
-            rx="520"
-            ry="220"
+            cx="500"
+            cy="250"
+            rx="420"
+            ry="170"
             fill="none"
             stroke="#10b981"
-            strokeWidth="28"
-            opacity="0.12"
+            strokeWidth="24"
+            opacity="0.10"
             filter="url(#soft-arc-blur)"
           />
 
-          {/* Outer Dashed Orbit - Clockwise */}
+          {/* Outer Dashed Orbit Behind Text - Clockwise */}
           <g
             style={{
-              transformOrigin: '650px 480px',
+              transformOrigin: '500px 250px',
               transform: `rotate(${arcRotate1}deg)`,
               transition: 'transform 0.08s linear',
             }}
           >
             <ellipse
-              cx="650"
-              cy="480"
-              rx="540"
-              ry="230"
+              cx="500"
+              cy="250"
+              rx="440"
+              ry="180"
               fill="none"
               stroke="url(#soft-arc-outer)"
               strokeWidth="1.4"
               strokeDasharray="10 8 4 8"
-              opacity="0.7"
+              opacity="0.75"
             />
           </g>
 
-          {/* Inner Architectural Beam - Counter-Clockwise */}
+          {/* Secondary Delicate Orbit Ring */}
           <g
             style={{
-              transformOrigin: '650px 480px',
+              transformOrigin: '500px 250px',
+              transform: `rotate(${arcRotate2 * 0.7}deg)`,
+              transition: 'transform 0.08s linear',
+            }}
+          >
+            <ellipse
+              cx="500"
+              cy="250"
+              rx="370"
+              ry="145"
+              fill="none"
+              stroke="url(#soft-arc-outer)"
+              strokeWidth="1"
+              strokeDasharray="6 6"
+              opacity="0.45"
+            />
+          </g>
+
+          {/* Inner Architectural Sweeping Arc - Counter-Clockwise */}
+          <g
+            style={{
+              transformOrigin: '500px 250px',
               transform: `rotate(${arcRotate2}deg)`,
               transition: 'transform 0.08s linear',
             }}
           >
-            {/* Soft Glow Path */}
+            {/* Top Arcing Beam over/behind the text */}
             <path
-              d="M 120 500 Q 650 220 1180 500"
+              d="M 80 250 Q 500 70 920 250"
               fill="none"
               stroke="url(#soft-arc-outer)"
-              strokeWidth="8"
-              opacity="0.3"
+              strokeWidth="7"
+              opacity="0.32"
               filter="url(#soft-arc-blur)"
             />
-
-            {/* Clean Beam */}
             <path
-              d="M 120 500 Q 650 220 1180 500"
+              d="M 80 250 Q 500 70 920 250"
               fill="none"
               stroke="url(#soft-arc-inner)"
               strokeWidth="2"
               strokeLinecap="round"
+            />
+
+            {/* Bottom Arcing Beam framing underneath the text */}
+            <path
+              d="M 120 250 Q 500 430 880 250"
+              fill="none"
+              stroke="url(#soft-arc-outer)"
+              strokeWidth="1.2"
+              strokeDasharray="8 6"
+              opacity="0.4"
             />
           </g>
         </svg>
@@ -278,17 +308,17 @@ export const HeroScrollAtmosphere: React.FC<HeroScrollAtmosphereProps> = ({ scro
 
       {/* 5. Minimalist Perspective Floor Grid */}
       <div
-        className="absolute bottom-0 inset-x-0 h-[180px] pointer-events-none z-[1]"
+        className="absolute bottom-0 inset-x-0 h-[170px] pointer-events-none z-[1]"
         style={{
           maskImage:
-            'linear-gradient(to top, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.12) 60%, transparent 100%)',
+            'linear-gradient(to top, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.1) 60%, transparent 100%)',
           WebkitMaskImage:
-            'linear-gradient(to top, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.12) 60%, transparent 100%)',
+            'linear-gradient(to top, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.1) 60%, transparent 100%)',
           perspective: '600px',
         }}
       >
         <div
-          className="w-full h-[360px] absolute bottom-0 left-0"
+          className="w-full h-[340px] absolute bottom-0 left-0"
           style={{
             backgroundImage:
               'linear-gradient(to right, rgba(52, 211, 153, 0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(52, 211, 153, 0.08) 1px, transparent 1px)',
@@ -300,7 +330,7 @@ export const HeroScrollAtmosphere: React.FC<HeroScrollAtmosphereProps> = ({ scro
         />
       </div>
 
-      {/* 6. Top Vignette Fade for Seamless Header Integration */}
+      {/* 6. Top Vignette Fade */}
       <div className="absolute top-0 inset-x-0 h-28 bg-gradient-to-b from-[#111822] via-[#111822]/80 to-transparent z-[3]" />
     </div>
   );

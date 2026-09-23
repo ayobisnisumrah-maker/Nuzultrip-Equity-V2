@@ -1,16 +1,31 @@
-import React from 'react';
-import { ArrowRight, Instagram, Facebook, Disc as TikTokIcon } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowRight, Instagram, Facebook, Disc as TikTokIcon, Phone, Mail, MapPin, ShieldCheck } from 'lucide-react';
 import { Container } from './Container';
+import { realtimeStore, PortalSettings } from '../../services/realtimeStore';
 
 interface FooterProps {
   onOpenInterest?: () => void;
   onOpenPitchdeck?: () => void;
   onOpenDetail: (title?: string) => void;
+  onOpenSuperAdmin?: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
   onOpenDetail,
+  onOpenSuperAdmin,
 }) => {
+  const [settings, setSettings] = useState<PortalSettings>(() =>
+    realtimeStore.getPortalSettings()
+  );
+
+  useEffect(() => {
+    const update = () => {
+      setSettings(realtimeStore.getPortalSettings());
+    };
+    const unsub = realtimeStore.subscribe(update);
+    return () => unsub();
+  }, []);
+
   const tentangLinks = [
     'Model Bisnis',
     'Ekosistem Bisnis',
@@ -42,7 +57,7 @@ export const Footer: React.FC<FooterProps> = ({
             <div>
               <div className="flex items-center mb-4">
                 <span className="text-[24px] sm:text-[26px] font-extrabold tracking-tight text-white">
-                  Nuzultrip
+                  {settings.companyName.split('(')[0].trim() || 'Nuzultrip'}
                 </span>
                 <span className="ml-2 text-[10px] font-bold uppercase tracking-[0.16em] px-1.5 py-0.5 rounded bg-white/10 text-white/80 border border-white/15">
                   Equity
@@ -51,6 +66,19 @@ export const Footer: React.FC<FooterProps> = ({
               <p className="text-[14px] sm:text-[15px] text-white/70 leading-relaxed max-w-[320px]">
                 Melayani perjalanan Muslim Indonesia dengan hati, profesionalisme, dan teknologi.
               </p>
+
+              <div className="mt-4 text-xs text-white/60 space-y-1.5">
+                <div className="flex items-start gap-2">
+                  <MapPin size={13} className="text-emerald-400 shrink-0 mt-0.5" />
+                  <span className="leading-snug">{settings.companyAddress}</span>
+                </div>
+                {settings.companyLicensePpiu && (
+                  <div className="flex items-start gap-2">
+                    <ShieldCheck size={13} className="text-emerald-400 shrink-0 mt-0.5" />
+                    <span className="leading-snug">{settings.companyLicensePpiu}</span>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Social Media Links */}
@@ -135,12 +163,12 @@ export const Footer: React.FC<FooterProps> = ({
                 Hubungi tim Investor Relations untuk informasi, dokumen, atau pembaruan resmi Nuzultrip Equity.
               </p>
               <a
-                href="https://wa.me/6281234567890?text=Halo%20Tim%20Nuzultrip%20Equity,%20saya%20membutuhkan%20informasi%20terbaru%20mengenai%20penawaran%20equity."
+                href={`https://wa.me/${settings.contactPhone.replace(/[^0-9]/g, '')}?text=Halo%20Tim%20Investor%20Relations,%20saya%20membutuhkan%20informasi%20terbaru%20mengenai%20penawaran%20equity.`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full py-2.5 px-4 rounded-xl bg-white text-[#090909] font-bold text-[13.5px] flex items-center justify-center gap-2 hover:bg-[#EDEDEB] transition-all group cursor-pointer"
               >
-                <span>Hubungi Kami</span>
+                <span>Hubungi Kami ({settings.contactPhone})</span>
                 <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
               </a>
             </div>
@@ -149,10 +177,19 @@ export const Footer: React.FC<FooterProps> = ({
 
         {/* Bottom Bar: Copyright & Compliance */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[13px] text-white/50">
-          <p>© 2026 Nuzultrip. All Rights Reserved.</p>
-          <p className="text-center sm:text-right">
-            Platform Penawaran Equity Ekosistem Perjalanan Muslim Indonesia.
-          </p>
+          <p>{settings.footerCopyright || '© 2026 PT. Swarna Dipa Wisata. All Rights Reserved.'}</p>
+          <div className="flex items-center gap-4 text-center sm:text-right">
+            <span>Platform Penawaran Equity Ekosistem Perjalanan Muslim Indonesia.</span>
+            {onOpenSuperAdmin && (
+              <button
+                type="button"
+                onClick={onOpenSuperAdmin}
+                className="text-amber-400 hover:text-amber-300 font-semibold transition-colors cursor-pointer text-xs flex items-center gap-1"
+              >
+                <span>⚙️ Super Admin</span>
+              </button>
+            )}
+          </div>
         </div>
       </Container>
     </footer>

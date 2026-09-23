@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   FileText,
   SearchCheck,
@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Container } from '../layout/Container';
 import { Eyebrow } from '../ui/Eyebrow';
+import { realtimeStore, PortalSettings } from '../../services/realtimeStore';
 
 interface ProcessSectionProps {
   onOpenDetail: () => void;
@@ -28,7 +29,7 @@ interface StepItem {
   icon: React.ReactNode;
 }
 
-const STEPS: StepItem[] = [
+const DEFAULT_STEPS: StepItem[] = [
   {
     id: 'step-1',
     stepNumber: '01',
@@ -76,6 +77,29 @@ export const ProcessSection: React.FC<ProcessSectionProps> = ({
   onOpenInterest,
 }) => {
   const [activeStep, setActiveStep] = useState<number>(0);
+  const [settings, setSettings] = useState<PortalSettings>(() =>
+    realtimeStore.getPortalSettings()
+  );
+
+  useEffect(() => {
+    const update = () => {
+      setSettings(realtimeStore.getPortalSettings());
+    };
+    const unsub = realtimeStore.subscribe(update);
+    return () => unsub();
+  }, []);
+
+  // Blend dynamic processList from settings if available
+  const steps: StepItem[] = DEFAULT_STEPS.map((step, idx) => {
+    if (settings.processList && settings.processList[idx]) {
+      return {
+        ...step,
+        title: settings.processList[idx].title || step.title,
+        description: settings.processList[idx].description || step.description,
+      };
+    }
+    return step;
+  });
 
   return (
     <section
@@ -104,7 +128,7 @@ export const ProcessSection: React.FC<ProcessSectionProps> = ({
         {/* Minimalist 4-Step Progressive Grid */}
         <div className="relative mb-12 sm:mb-16">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 relative z-10">
-            {STEPS.map((step, index) => {
+            {steps.map((step, index) => {
               const isSelected = activeStep === index;
 
               return (

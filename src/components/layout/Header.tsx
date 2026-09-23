@@ -5,9 +5,18 @@ import { Container } from './Container';
 interface HeaderProps {
   onOpenLogin: () => void;
   onOpenInterest: () => void;
+  isLoggedIn?: boolean;
+  onOpenDashboard?: () => void;
+  onOpenSuperAdmin?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onOpenLogin, onOpenInterest }) => {
+export const Header: React.FC<HeaderProps> = ({
+  onOpenLogin,
+  onOpenInterest,
+  isLoggedIn = false,
+  onOpenDashboard,
+  onOpenSuperAdmin,
+}) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -98,16 +107,29 @@ export const Header: React.FC<HeaderProps> = ({ onOpenLogin, onOpenInterest }) =
           </nav>
 
           {/* Right Action: Masuk & CTA */}
-          <div className="hidden lg:flex items-center gap-3">
-            <button
-              id="header-masuk-btn"
-              type="button"
-              onClick={onOpenLogin}
-              className="inline-flex items-center gap-2 px-4 py-1.5 sm:py-2 rounded-full bg-white/10 hover:bg-white/15 border border-white/15 text-white text-[13px] sm:text-[13.5px] font-semibold transition-all duration-200 active:scale-98 shadow-xs group cursor-pointer backdrop-blur-sm"
-            >
-              <span>Masuk</span>
-              <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
-            </button>
+          <div className="hidden lg:flex items-center gap-2.5">
+            {isLoggedIn ? (
+              <button
+                id="header-dashboard-btn"
+                type="button"
+                onClick={onOpenDashboard}
+                className="inline-flex items-center gap-2 px-4 py-1.5 sm:py-2 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-300 text-[13px] sm:text-[13.5px] font-semibold transition-all duration-200 active:scale-98 shadow-xs group cursor-pointer backdrop-blur-sm"
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>Dashboard Investor</span>
+                <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
+              </button>
+            ) : (
+              <button
+                id="header-masuk-btn"
+                type="button"
+                onClick={onOpenLogin}
+                className="inline-flex items-center gap-2 px-4 py-1.5 sm:py-2 rounded-full bg-white/10 hover:bg-white/15 border border-white/15 text-white text-[13px] sm:text-[13.5px] font-semibold transition-all duration-200 active:scale-98 shadow-xs group cursor-pointer backdrop-blur-sm"
+              >
+                <span>Masuk</span>
+                <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
+              </button>
+            )}
           </div>
 
           {/* Mobile Hamburger Button */}
@@ -145,28 +167,45 @@ export const Header: React.FC<HeaderProps> = ({ onOpenLogin, onOpenInterest }) =
           </div>
 
           <div className="pt-6 pb-4 flex flex-col gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                setMobileMenuOpen(false);
-                onOpenInterest();
-              }}
-              className="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-[#0d151d] font-bold text-center flex items-center justify-center gap-2 active:scale-98 transition-all shadow-md"
-            >
-              <span>Ajukan Minat Equity</span>
-              <ArrowRight size={16} />
-            </button>
+            {isLoggedIn ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenDashboard?.();
+                }}
+                className="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-[#0d151d] font-bold text-center flex items-center justify-center gap-2 active:scale-98 transition-all shadow-md cursor-pointer"
+              >
+                <span className="w-2 h-2 rounded-full bg-[#0d151d] animate-ping" />
+                <span>Buka Dashboard Investor</span>
+                <ArrowRight size={16} />
+              </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onOpenInterest();
+                  }}
+                  className="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-[#0d151d] font-bold text-center flex items-center justify-center gap-2 active:scale-98 transition-all shadow-md cursor-pointer"
+                >
+                  <span>Ajukan Minat Equity</span>
+                  <ArrowRight size={16} />
+                </button>
 
-            <button
-              type="button"
-              onClick={() => {
-                setMobileMenuOpen(false);
-                onOpenLogin();
-              }}
-              className="w-full py-3 px-5 rounded-xl border border-white/20 text-white font-medium text-center hover:bg-white/10 transition-all"
-            >
-              Masuk Portal Investor
-            </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onOpenLogin();
+                  }}
+                  className="w-full py-3 px-5 rounded-xl border border-white/20 text-white font-medium text-center hover:bg-white/10 transition-all cursor-pointer"
+                >
+                  Masuk Portal (Investor / Admin)
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}

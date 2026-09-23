@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, CheckCircle, Calculator, ShieldCheck, ArrowRight } from 'lucide-react';
+import { realtimeStore } from '../../services/realtimeStore';
 
 interface EquityInterestModalProps {
   isOpen: boolean;
@@ -34,6 +35,19 @@ export const EquityInterestModal: React.FC<EquityInterestModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitted(true);
+
+    // Push into realtimeStore messages & audit logs
+    realtimeStore.addMessage({
+      senderName: name.trim() || 'Calon Investor',
+      senderPhone: phone.trim() || '-',
+      senderEmail: email.trim() || '-',
+      category: 'equity_interest',
+      subject: `Pengajuan Minat ${units} Unit Equity (${investorType})`,
+      message: `Pengajuan minat kepemilikan ${units} unit saham (estimasi investasi Rp ${(
+        units * pricePerUnit
+      ).toLocaleString('id-ID')}) oleh ${name} tipe investor: ${investorType}.`,
+      requestedUnits: units,
+    });
   };
 
   const handleReset = () => {
