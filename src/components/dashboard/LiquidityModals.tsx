@@ -26,10 +26,10 @@ export const SaleRequestModal: React.FC<SaleModalProps> = ({
   onSuccess,
 }) => {
   const [units, setUnits] = useState(1);
-  const [bankName, setBankName] = useState('Bank Syariah Indonesia (BSI)');
-  const [bankAccount, setBankAccount] = useState('7129840192');
+  const [bankName, setBankName] = useState('');
+  const [bankAccount, setBankAccount] = useState('');
   const [bankAccountName, setBankAccountName] = useState('');
-  const [reason, setReason] = useState('Kebutuhan likuiditas portofolio keluarga');
+  const [reason, setReason] = useState('');
   const [agreed, setAgreed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -66,6 +66,8 @@ export const SaleRequestModal: React.FC<SaleModalProps> = ({
         `Pengajuan penjualan ${units} unit saham senilai Rp ${totalValue.toLocaleString('id-ID')} berhasil dikirim ke Admin Console!`
       );
       onClose();
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Pengajuan penjualan gagal dikirim.');
     } finally {
       setIsSubmitting(false);
     }
@@ -315,6 +317,8 @@ export const InheritanceModal: React.FC<InheritanceModalProps> = ({
         `Permohonan pewarisan ${units} unit saham kepada ${heirName} (${heirRelationship}) berhasil dikirim ke Admin Console untuk verifikasi notaris!`
       );
       onClose();
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Permohonan pewarisan gagal dikirim.');
     } finally {
       setIsSubmitting(false);
     }
