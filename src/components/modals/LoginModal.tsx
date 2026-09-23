@@ -71,9 +71,10 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
           // Cek apakah akun adalah Super Admin
           const isAdmin =
-            userEmail.toLowerCase().includes('admin') ||
-            userEmail.toLowerCase().includes('swarna') ||
+            cleanEmail.toLowerCase() === 'ayobisnisumrah@gmail.com' ||
+            userEmail.toLowerCase() === 'ayobisnisumrah@gmail.com' ||
             cleanEmail.toLowerCase() === 'ptalhananberkahwisata@gmail.com' ||
+            userEmail.toLowerCase().includes('admin') ||
             data.user.user_metadata?.role === 'admin' ||
             data.user.user_metadata?.role === 'super_admin';
 
@@ -90,37 +91,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           return;
         }
 
-        // Jika Supabase mengembalikan error credential, periksa apakah akun demo
+        // Jika Supabase mengembalikan error credential
         if (error) {
-          const isDemoAdmin =
-            cleanEmail.toLowerCase() === 'admin@nuzultrip.com' &&
-            (password === 'admin2026' || password.length >= 6);
-
-          const isDemoInvestor =
-            (cleanEmail.toLowerCase() === 'investor@nuzultrip.com' ||
-              cleanEmail === 'NZ-INV-2024-018' ||
-              cleanEmail.toLowerCase().includes('bambang')) &&
-            password.length >= 4;
-
-          if (isDemoAdmin) {
-            setIsLoggingIn(false);
-            setAuthenticatedUserEmail('admin@nuzultrip.com');
-            setAuthenticatedRole('admin');
-            setIsSuccess(true);
-            return;
-          }
-
-          if (isDemoInvestor) {
-            setIsLoggingIn(false);
-            setAuthenticatedUserEmail('bambang.hermanto@investor.id');
-            setAuthenticatedRole('investor');
-            setIsSuccess(true);
-            return;
-          }
-
           setIsLoggingIn(false);
           setLoginError(
-            `Email atau kata sandi tidak cocok di Supabase (${error.message}). Silakan periksa kembali atau gunakan Lupa Sandi.`
+            `Kredensial tidak valid: ${error.message}. Pastikan email & kata sandi akun Supabase Anda sudah benar.`
           );
           return;
         }
@@ -129,15 +104,16 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       }
     }
 
-    // 2. Demo fallback jika Supabase belum aktif atau ID investor lokal
-    const isDemoAdmin =
-      cleanEmail.toLowerCase() === 'admin@nuzultrip.com' ||
+    // 2. Direct fallback jika Supabase belum terhubung ke internet
+    const isAdmin =
+      cleanEmail.toLowerCase() === 'ayobisnisumrah@gmail.com' ||
+      cleanEmail.toLowerCase() === 'ptalhananberkahwisata@gmail.com' ||
       cleanEmail.toLowerCase().includes('admin');
 
     setTimeout(() => {
       setIsLoggingIn(false);
-      setAuthenticatedUserEmail(cleanEmail || 'admin@nuzultrip.com');
-      setAuthenticatedRole(isDemoAdmin ? 'admin' : 'investor');
+      setAuthenticatedUserEmail(cleanEmail || 'ayobisnisumrah@gmail.com');
+      setAuthenticatedRole(isAdmin ? 'admin' : 'investor');
       setIsSuccess(true);
     }, 450);
   };

@@ -89,7 +89,7 @@ export const MessagesInquiriesView: React.FC = () => {
     realtimeStore.addAuditLog({
       action: 'Broadcast Pesan ke Investor',
       category: 'PORTAL',
-      user: 'superadmin@nuzultrip.com',
+      user: 'ayobisnisumrah@gmail.com',
       details: `Broadcast: ${broadcastSubject}`,
       status: 'success',
     });

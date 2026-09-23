@@ -691,48 +691,56 @@ export const InvestorDashboard: React.FC<InvestorDashboardProps> = ({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-                    {dividends.map((record) => (
-                      <tr key={record.id} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="py-3.5 px-4 font-bold text-slate-900">
-                          {record.period}
-                        </td>
-                        <td className="py-3.5 px-4 text-slate-600">
-                          {record.paymentDate}
-                        </td>
-                        <td className="py-3.5 px-4 text-slate-800">
-                          {formatRupiah(record.amountPerUnit)}
-                        </td>
-                        <td className="py-3.5 px-4">{record.units} Unit</td>
-                        <td className="py-3.5 px-4 font-extrabold text-emerald-700">
-                          {formatRupiah(record.totalNet)}
-                        </td>
-                        <td className="py-3.5 px-4">
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            <CheckCircle2 size={11} className="text-emerald-600" />
-                            {record.status}
-                          </span>
-                          <span className="block text-[10px] text-slate-400 mt-0.5">
-                            {record.referenceNumber}
-                          </span>
-                        </td>
-                        <td className="py-3.5 px-4 text-right">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              alert(
-                                `Bukti Transfer Resmi #${record.referenceNumber} senilai ${formatRupiah(
-                                  record.totalNet
-                                )} telah diverifikasi melalui sistem kliring Bank Syariah Indonesia.`
-                              );
-                            }}
-                            className="px-2.5 py-1 rounded-md border border-slate-200 hover:bg-slate-100 text-[11px] font-semibold text-slate-700 inline-flex items-center gap-1 cursor-pointer"
-                          >
-                            <Download size={11} />
-                            <span>Slip PDF</span>
-                          </button>
+                    {dividends.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="py-10 text-center text-slate-500 text-xs">
+                          Belum ada riwayat pembagian bagi hasil tercatat. Laporan bagi hasil akan diterbitkan secara otomatis setelah keputusan pembukuan buku kuartal & RUPS perseroan.
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      dividends.map((record) => (
+                        <tr key={record.id} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="py-3.5 px-4 font-bold text-slate-900">
+                            {record.period}
+                          </td>
+                          <td className="py-3.5 px-4 text-slate-600">
+                            {record.paymentDate}
+                          </td>
+                          <td className="py-3.5 px-4 text-slate-800">
+                            {formatRupiah(record.amountPerUnit)}
+                          </td>
+                          <td className="py-3.5 px-4">{record.units} Unit</td>
+                          <td className="py-3.5 px-4 font-extrabold text-emerald-700">
+                            {formatRupiah(record.totalNet)}
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <CheckCircle2 size={11} className="text-emerald-600" />
+                              {record.status}
+                            </span>
+                            <span className="block text-[10px] text-slate-400 mt-0.5">
+                              {record.referenceNumber}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4 text-right">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                alert(
+                                  `Bukti Transfer Resmi #${record.referenceNumber} senilai ${formatRupiah(
+                                    record.totalNet
+                                  )} telah diverifikasi melalui sistem kliring Bank Syariah Indonesia.`
+                                );
+                              }}
+                              className="px-2.5 py-1 rounded-md border border-slate-200 hover:bg-slate-100 text-[11px] font-semibold text-slate-700 inline-flex items-center gap-1 cursor-pointer"
+                            >
+                              <Download size={11} />
+                              <span>Slip PDF</span>
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>

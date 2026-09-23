@@ -57,7 +57,7 @@ import {
   AuditLogItem,
   InquiryMessage,
 } from '../../services/realtimeStore';
-import { InvestorReport, DEMO_INVESTOR } from '../../data/investorData';
+import { InvestorReport } from '../../data/investorData';
 import { InvoiceReceiptModal } from './InvoiceReceiptModal';
 import { CashierInvoiceView } from './CashierInvoiceView';
 import { PortalInvestorCmsView } from './PortalInvestorCmsView';
@@ -933,12 +933,12 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
 
             {/* User Profile */}
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-[#e8f5e9] border border-emerald-300 text-emerald-800 font-bold text-xs flex items-center justify-center">
-                SA
+              <div className="w-8 h-8 rounded-full bg-slate-900 border border-slate-700 text-amber-300 font-bold text-xs flex items-center justify-center shadow-xs">
+                AB
               </div>
               <div className="hidden sm:block text-left leading-tight">
-                <div className="text-xs font-bold text-slate-900">Super Admin</div>
-                <div className="text-[10px] text-slate-400">Super Admin</div>
+                <div className="text-xs font-bold text-slate-900">ayobisnisumrah@gmail.com</div>
+                <div className="text-[10px] text-emerald-700 font-semibold">Super Administrator (Owner)</div>
               </div>
             </div>
 
@@ -1478,68 +1478,44 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    <tr className="hover:bg-slate-50/60">
-                      <td className="py-3.5 px-4 font-bold text-slate-900">
-                        {DEMO_INVESTOR.name}
-                        <div className="text-[11px] font-normal text-slate-500">
-                          {DEMO_INVESTOR.id}
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-4 font-mono font-bold text-slate-700">
-                        NZ/CERT/2024/018
-                      </td>
-                      <td className="py-3.5 px-4 font-black text-emerald-700">
-                        {DEMO_INVESTOR.unitsOwned} Unit
-                      </td>
-                      <td className="py-3.5 px-4 font-bold text-slate-800">
-                        {DEMO_INVESTOR.equityPercentage}%
-                      </td>
-                      <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
-                        Rp {DEMO_INVESTOR.totalInvestment.toLocaleString('id-ID')}
-                      </td>
-                      <td className="py-3.5 px-4 text-slate-600">
-                        <div>{DEMO_INVESTOR.phone}</div>
-                        <div className="text-[11px] text-slate-400 font-mono">
-                          {DEMO_INVESTOR.bankAccount.bankName} {DEMO_INVESTOR.bankAccount.accountNumber}
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-4 text-center">
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          Aktif
-                        </span>
-                      </td>
-                    </tr>
-                    <tr className="hover:bg-slate-50/60">
-                      <td className="py-3.5 px-4 font-bold text-slate-900">
-                        dr. Hendra Wijaya, Sp.PD
-                        <div className="text-[11px] font-normal text-slate-500">
-                          INV-2025-002
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-4 font-mono font-bold text-slate-700">
-                        SDW/CERT/2025/002
-                      </td>
-                      <td className="py-3.5 px-4 font-black text-emerald-700">
-                        2 Unit
-                      </td>
-                      <td className="py-3.5 px-4 font-bold text-slate-800">
-                        4.0%
-                      </td>
-                      <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
-                        Rp 200.000.000
-                      </td>
-                      <td className="py-3.5 px-4 text-slate-600">
-                        <div>+62 813-9821-4432</div>
-                        <div className="text-[11px] text-slate-400 font-mono">
-                          BSI 7149028114
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-4 text-center">
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          Aktif
-                        </span>
-                      </td>
-                    </tr>
+                    {/* Pemegang Unit Equity dari Transaksi Kasir Riil */}
+                    {transactions
+                      .filter((t) => t.transactionType === 'equity_purchase' && t.paymentStatus === 'Lunas')
+                      .map((trx, idx) => (
+                        <tr key={trx.id} className="hover:bg-slate-50/60">
+                          <td className="py-3.5 px-4 font-bold text-slate-900">
+                            {trx.customerName}
+                            <div className="text-[11px] font-normal text-slate-500">
+                              {trx.customerEmail || trx.id}
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-4 font-mono font-bold text-slate-700">
+                            {trx.invoiceNumber || `NZ-EQ-${idx + 1}`}
+                          </td>
+                          <td className="py-3.5 px-4 font-black text-emerald-700">
+                            {trx.unitsCount || 1} Unit
+                          </td>
+                          <td className="py-3.5 px-4 font-bold text-slate-800">
+                            {(((trx.unitsCount || 1) / 50) * 40).toFixed(1)}%
+                          </td>
+                          <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
+                            Rp {trx.amountTotal.toLocaleString('id-ID')}
+                          </td>
+                          <td className="py-3.5 px-4 text-slate-600">
+                            <div>{trx.customerPhone || '-'}</div>
+                            <div className="text-[11px] text-slate-400 font-mono">
+                              {trx.paymentMethod}
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-4 text-center">
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              Aktif
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+
+                    {/* Alokasi Pendiri & Manajemen Inti */}
                     <tr className="bg-slate-50/50">
                       <td className="py-3.5 px-4 font-bold text-slate-600">
                         Pendiri & Manajemen Inti (PT. Swarna Dipa Wisata)
@@ -1847,7 +1823,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                     <div className="py-2 flex items-center justify-between">
                       <div>
                         <strong>Super Administrator</strong>
-                        <div className="text-slate-500 text-[11px]">admin@nuzultrip.com</div>
+                        <div className="text-slate-500 text-[11px]">ayobisnisumrah@gmail.com</div>
                       </div>
                       <span className="px-2.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800">
                         Akses Penuh
@@ -1922,7 +1898,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                   required
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
-                  placeholder="Contoh: H. Bambang Hermanto"
+                  placeholder="Contoh: Nama Lengkap Investor"
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none"
                 />
               </div>

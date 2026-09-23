@@ -235,144 +235,32 @@ const INITIAL_PORTAL_SETTINGS: PortalSettings = {
   footerCopyright: '© 2026 PT. Swarna Dipa Wisata. Seluruh hak cipta dilindungi undang-undang.',
 };
 
-const INITIAL_REQUESTS: ShareTransferRequest[] = [
-  {
-    id: 'REQ-2026-089',
-    type: 'inheritance',
-    investorId: 'INV-2024-0018',
-    investorName: 'H. Bambang Hermanto, SE',
-    investorEmail: 'bambang.hermanto@investor.co.id',
-    investorPhone: '+62 812-8921-8890',
-    units: 1,
-    unitPrice: 100000000,
-    totalValue: 100000000,
-    status: 'Menunggu Verifikasi',
-    createdAt: '2026-09-20 11:15',
-    heirName: 'Ahmad Fauzan Hermanto',
-    heirRelationship: 'Anak Kandung',
-    heirNik: '7371101905950002',
-    heirPhone: '+62 812-4421-9988',
-    heirEmail: 'fauzan.hermanto@gmail.com',
-    legalDocNumber: 'Akta Hibah Waris Notaris No. 42/2026',
-    inheritanceNotes: 'Pelimpahan 1 unit saham equity kepada putra kandung dengan hak bagi hasil penuh.',
-  },
-];
+const INITIAL_REQUESTS: ShareTransferRequest[] = [];
 
 const INITIAL_AUDIT_LOGS: AuditLogItem[] = [
   {
-    id: 'LOG-001',
-    action: 'Login Super Admin',
-    category: 'AUTH',
-    user: 'superadmin@nuzultrip.com',
-    details: 'Autentikasi sesi konsol admin berhasil via Single Sign-On',
-    timestamp: '2026-09-23 09:12:04',
+    id: 'LOG-INIT',
+    action: 'Inisialisasi Sistem Produksi',
+    category: 'SISTEM',
+    user: 'ayobisnisumrah@gmail.com',
+    details: 'Sistem konsol Nuzultrip Equity siap produksi & tersambung ke database realtime.',
+    timestamp: '2026-09-23 10:00:00',
     status: 'success',
   },
   {
-    id: 'LOG-002',
-    action: 'Penerbitan Invoice Kasir',
-    category: 'KEUANGAN',
-    user: 'superadmin@nuzultrip.com',
-    details: 'Invoice #INV-20260918-3413CF982BF3 senilai Rp 110.400.000 (Paket Umrah 9 Hari) diterbitkan',
-    timestamp: '2026-09-18 14:20:11',
-    status: 'info',
-  },
-  {
-    id: 'LOG-003',
-    action: 'Permohonan Waris Masuk',
-    category: 'KEPEMILIKAN',
-    user: 'H. Bambang Hermanto, SE',
-    details: 'Pengajuan pewarisan 1 unit saham ke Ahmad Fauzan Hermanto (Akta No. 42/2026)',
-    timestamp: '2026-09-20 11:15:32',
-    status: 'warning',
+    id: 'LOG-AUTH',
+    action: 'Otorisasi Super Administrator',
+    category: 'AUTH',
+    user: 'ayobisnisumrah@gmail.com',
+    details: 'Akses penuh eksekutif & kasir perseroan aktif.',
+    timestamp: '2026-09-23 10:05:00',
+    status: 'success',
   },
 ];
 
-const INITIAL_MESSAGES: InquiryMessage[] = [
-  {
-    id: 'MSG-2026-001',
-    senderName: 'dr. Faisal Ramadhan, Sp.A',
-    senderPhone: '+62 811-4567-8901',
-    senderEmail: 'dr.faisal.ramadhan@gmail.com',
-    category: 'equity_interest',
-    subject: 'Minat Pembelian 2 Unit Equity Tahap I',
-    message: 'Assalamu alaikum, saya ingin mengajukan minat kepemilikan 2 unit saham equity PT. Swarna Dipa Wisata. Mohon informasi kelengkapan berkas notariat dan jadwal penandatanganan akta di Makassar.',
-    requestedUnits: 2,
-    status: 'unread',
-    createdAt: '2026-09-22 16:30',
-  },
-  {
-    id: 'MSG-2026-002',
-    senderName: 'Hj. Mardiana Syamsuddin',
-    senderPhone: '+62 812-7890-1234',
-    senderEmail: 'mardiana.syams@yahoo.co.id',
-    category: 'bagi_hasil',
-    subject: 'Konfirmasi Jadwal Transfer Dividen Kuartal 3',
-    message: 'Selamat sore tim Investor Relations. Ingin menanyakan perkiraan tanggal pencairan bagi hasil untuk pembukuan periode September 2026 ke rekening BSI. Terima kasih.',
-    status: 'read',
-    createdAt: '2026-09-21 10:15',
-    repliedAt: '2026-09-21 14:00',
-    replyNote: 'Telah dikonfirmasi via WhatsApp bahwa dividen akan ditransfer tanggal 30 September 2026 sesuai agenda RUPS.',
-  },
-  {
-    id: 'MSG-2026-003',
-    senderName: 'Ir. H. Gunawan Wibisono',
-    senderPhone: '+62 813-9012-3456',
-    senderEmail: 'gunawan.wibisono@bumn-invest.id',
-    category: 'legalitas',
-    subject: 'Permintaan Salinan AD/ART dan SK Kemenkumham',
-    message: 'Mohon izin meminta salinan PDF SK Kemenkumham terbaru perseroan dan izin PPIU Kemenag untuk kelengkapan administrasi legal audit family office kami. Salam hangat.',
-    requestedUnits: 3,
-    status: 'unread',
-    createdAt: '2026-09-20 14:45',
-  },
-];
+const INITIAL_MESSAGES: InquiryMessage[] = [];
 
-const INITIAL_TRANSACTIONS: CashierTransaction[] = [
-  {
-    id: 'TRX-2026-001',
-    invoiceNumber: 'INV/NZ/20260715/001',
-    transactionType: 'equity_purchase',
-    customerName: 'H. Bambang Hermanto, SE',
-    customerPhone: '+62 812-8921-8890',
-    customerEmail: 'bambang.hermanto@investor.co.id',
-    unitsCount: 2,
-    amountTotal: 200000000,
-    paymentMethod: 'bank_transfer_bsi',
-    paymentStatus: 'Lunas',
-    notes: 'Pelunasan 2 Unit Equity Tahap I & Akta Notaris No. 18',
-    createdBy: 'Super Admin Kasir',
-    createdAt: '2026-07-15 14:32:00',
-  },
-  {
-    id: 'TRX-2026-002',
-    invoiceNumber: 'INV/NZ/20260716/002',
-    transactionType: 'umroh_package',
-    customerName: 'Keluarga dr. Hendra Wijaya',
-    customerPhone: '+62 811-9201-3321',
-    customerEmail: 'dr.hendra@gmail.com',
-    amountTotal: 145000000,
-    paymentMethod: 'bank_transfer_mandiri',
-    paymentStatus: 'Lunas',
-    notes: 'Paket Umroh Reguler VIP 4 Pax Keberangkatan September',
-    createdBy: 'Kasir Front Office',
-    createdAt: '2026-07-16 10:15:00',
-  },
-  {
-    id: 'TRX-2026-003',
-    invoiceNumber: 'INV/NZ/20260718/003',
-    transactionType: 'hotel_allotment',
-    customerName: 'PT Al-Madinah Travel Rekanan',
-    customerPhone: '+62 813-4411-9988',
-    customerEmail: 'booking@almadinahtravel.com',
-    amountTotal: 280000000,
-    paymentMethod: 'bank_transfer_bsi',
-    paymentStatus: 'Lunas',
-    notes: 'B2B Land Arrangement 20 Room Nights Hotel Makkah Tower',
-    createdBy: 'Kasir Divisi B2B',
-    createdAt: '2026-07-18 16:45:00',
-  },
-];
+const INITIAL_TRANSACTIONS: CashierTransaction[] = [];
 
 type StoreListener = () => void;
 
@@ -742,7 +630,7 @@ class RealtimeStore {
     this.addAuditLog({
       action: 'Update Pengaturan Portal',
       category: 'PORTAL',
-      user: 'superadmin@nuzultrip.com',
+      user: 'ayobisnisumrah@gmail.com',
       details: 'Pembaruan konten landing page publik & CMS portal investor',
       status: 'info',
     });
@@ -815,7 +703,7 @@ class RealtimeStore {
     this.addAuditLog({
       action: `Status Pengajuan #${targetReq.id} diubah ke ${status}`,
       category: 'KEPEMILIKAN',
-      user: 'superadmin@nuzultrip.com',
+      user: 'ayobisnisumrah@gmail.com',
       details: `Persetujuan transaksi kepemilikan investor ${targetReq.investorName}. Catatan: ${adminNotes || '-'}`,
       status: status === 'Disetujui' ? 'success' : 'info',
     });
@@ -918,7 +806,7 @@ class RealtimeStore {
     this.addAuditLog({
       action: `Pesan #${id} Dibalas`,
       category: 'PORTAL',
-      user: 'superadmin@nuzultrip.com',
+      user: 'ayobisnisumrah@gmail.com',
       details: `Respons dikirim kepada ${this.messages[idx].senderName}: "${replyNote}"`,
       status: 'success',
     });
@@ -937,7 +825,7 @@ class RealtimeStore {
     this.addAuditLog({
       action: `Pesan #${id} Dihapus`,
       category: 'PORTAL',
-      user: 'superadmin@nuzultrip.com',
+      user: 'ayobisnisumrah@gmail.com',
       details: `Pesan dari ${deleted.senderName} dihapus`,
       status: 'warning',
     });
