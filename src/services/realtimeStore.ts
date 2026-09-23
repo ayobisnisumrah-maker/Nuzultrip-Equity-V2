@@ -1,5 +1,5 @@
 import { supabase, appSchema, isSupabaseConfigured } from '../lib/supabase';
-import { InvestorProfile, InvestorReport, DividendRecord, INVESTOR_REPORTS, DEMO_DIVIDENDS } from '../data/investorData';
+import { InvestorProfile, InvestorReport, DividendRecord } from '../data/investorData';
 
 export interface CashierTransaction {
   id: string;
@@ -293,13 +293,13 @@ class RealtimeStore {
   private loadFromStorage() {
     try {
       const storedReports = localStorage.getItem(STORAGE_KEYS.REPORTS);
-      this.reports = storedReports ? JSON.parse(storedReports) : INVESTOR_REPORTS;
+      this.reports = storedReports ? JSON.parse(storedReports) : [];
 
       const storedTx = localStorage.getItem(STORAGE_KEYS.TRANSACTIONS);
       this.transactions = storedTx ? JSON.parse(storedTx) : INITIAL_TRANSACTIONS;
 
       const storedDiv = localStorage.getItem(STORAGE_KEYS.DIVIDENDS);
-      this.dividends = storedDiv ? JSON.parse(storedDiv) : DEMO_DIVIDENDS;
+      this.dividends = storedDiv ? JSON.parse(storedDiv) : [];
 
       const storedPortal = localStorage.getItem(STORAGE_KEYS.PORTAL);
       this.portalSettings = storedPortal
@@ -318,7 +318,7 @@ class RealtimeStore {
       console.warn('RealtimeStore: Error reading localStorage', e);
       this.reports = INVESTOR_REPORTS;
       this.transactions = INITIAL_TRANSACTIONS;
-      this.dividends = DEMO_DIVIDENDS;
+      this.dividends = [];
       this.portalSettings = INITIAL_PORTAL_SETTINGS;
       this.requests = INITIAL_REQUESTS;
       this.auditLogs = INITIAL_AUDIT_LOGS;
