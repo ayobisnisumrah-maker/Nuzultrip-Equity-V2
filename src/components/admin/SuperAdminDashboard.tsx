@@ -67,7 +67,9 @@ import { MessagesInquiriesView } from './MessagesInquiriesView';
 import { FinancialManagementView } from './FinancialManagementView';
 import { SystemIntegrationsView } from './SystemIntegrationsView';
 import { isSupabaseConfigured } from '../../lib/supabase';
-import { AdminAccess, loadAdminAccess } from '../../services/adminAccessService';\nimport { PublicDocumentManager } from './PublicDocumentManager';\nimport { PortalSectionEditor } from './PortalSectionEditor';
+import { AdminAccess, loadAdminAccess } from '../../services/adminAccessService';
+import { PublicDocumentManager } from './PublicDocumentManager';
+import { PortalSectionEditor } from './PortalSectionEditor';
 import { provisioningService } from '../../services/provisioningService';
 
 interface SuperAdminDashboardProps {
