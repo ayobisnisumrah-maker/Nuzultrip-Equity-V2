@@ -1,5 +1,5 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
-import { InvestorReport, DividendRecord, INVESTOR_REPORTS, DEMO_DIVIDENDS } from '../data/investorData';
+import { InvestorProfile, InvestorReport, DividendRecord, INVESTOR_REPORTS, DEMO_DIVIDENDS } from '../data/investorData';
 
 export interface CashierTransaction {
   id: string;
@@ -273,6 +273,7 @@ class RealtimeStore {
   private requests: ShareTransferRequest[] = [];
   private auditLogs: AuditLogItem[] = [];
   private messages: InquiryMessage[] = [];
+  private investorProfile: InvestorProfile | null = null;
   private channel: any = null;
 
   constructor() {
@@ -351,6 +352,8 @@ class RealtimeStore {
         inheritanceResult,
         auditResult,
         inquiriesResult,
+        investorResult,
+        holdingsResult,
       ] = await Promise.all([
         supabase
           .from('financial_reports')
@@ -382,6 +385,15 @@ class RealtimeStore {
           .select('id,name,email,phone,message,status,created_at,handled_at')
           .order('created_at', { ascending: false })
           .limit(100),
+        supabase
+          .from('investors')
+          .select('id,reference_code,status,legal_name,whatsapp_number,bank_name,bank_account_name,bank_account_number,activated_at,approved_at,created_at')
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from('ownership_holdings')
+          .select('id,units,ownership_bps,acquisition_at,status,ownership_offerings(unit_price)')
+          .eq('status', 'active'),
       ]);
 
       if (!reportsResult.error) {
@@ -531,6 +543,47 @@ class RealtimeStore {
         }));
       }
 
+      if (!investorResult.error && investorResult.data) {
+        const investor: any = investorResult.data;
+        const holdings = !holdingsResult.error ? holdingsResult.data || [] : [];
+        const unitsOwned = holdings.reduce((sum: number, h: any) => sum + Number(h.units || 0), 0);
+        const ownershipBps = holdings.reduce((sum: number, h: any) => sum + Number(h.ownership_bps || 0), 0);
+        const totalInvestment = holdings.reduce((sum: number, h: any) => {
+          const offering = Array.isArray(h.ownership_offerings) ? h.ownership_offerings[0] : h.ownership_offerings;
+          return sum + Number(h.units || 0) * Number(offering?.unit_price || 0);
+        }, 0);
+        const unitPrice = unitsOwned > 0 ? totalInvestment / unitsOwned : 0;
+        const paidDividends = this.dividends
+          .filter((d) => d.status === 'Berhasil')
+          .reduce((sum, d) => sum + d.totalNet, 0);
+        const pendingDividend = this.dividends
+          .filter((d) => d.status !== 'Berhasil')
+          .reduce((sum, d) => sum + d.totalNet, 0);
+        const { data: authData } = await supabase.auth.getUser();
+        this.investorProfile = {
+          id: investor.reference_code || investor.id,
+          name: investor.legal_name || authData.user?.email || 'Investor',
+          email: authData.user?.email || '',
+          phone: investor.whatsapp_number || '',
+          joinDate: new Date(investor.activated_at || investor.approved_at || investor.created_at).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }),
+          unitsOwned,
+          unitPrice,
+          totalInvestment,
+          equityPercentage: ownershipBps / 100,
+          bankAccount: {
+            bankName: investor.bank_name || '-',
+            accountNumber: investor.bank_account_number || '-',
+            accountHolder: investor.bank_account_name || investor.legal_name || '-',
+          },
+          totalDividendsReceived: paidDividends,
+          pendingDividend,
+          nextDividendDate: 'Sesuai jadwal distribusi yang dipublikasikan',
+          status: investor.status === 'active' ? 'Aktif' : investor.status === 'approved' ? 'Review' : 'Pending',
+        };
+      } else {
+        this.investorProfile = null;
+      }
+
       this.saveToStorage();
       this.notify();
 
@@ -577,6 +630,10 @@ class RealtimeStore {
   public subscribe(listener: StoreListener): () => void {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
+  }
+
+  public getInvestorProfile(): InvestorProfile | null {
+    return this.investorProfile ? { ...this.investorProfile, bankAccount: { ...this.investorProfile.bankAccount } } : null;
   }
 
   private notify() {
