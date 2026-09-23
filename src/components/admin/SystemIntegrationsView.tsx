@@ -186,28 +186,30 @@ VITE_SUPABASE_ANON_KEY="YOUR_SUPABASE_ANON_KEY"`;
               <div className="w-10 h-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-bold shadow-xs">
                 <GitBranch size={20} />
               </div>
-              <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-700 border border-slate-200">
-                SIAP PUSH (PENDING)
+              <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                TERHUBUNG & SINKRON
               </span>
             </div>
             <h3 className="font-extrabold text-slate-900 text-sm">GitHub Repository</h3>
             <p className="text-xs text-slate-500 mt-1">
-              Source code bersih, file .gitignore siap, tinggal di-push ke repositori GitHub pribadi/organisasi Anda.
+              Tersambung langsung ke repositori <strong>ayobisnisumrah-maker/Nuzultrip-Equity-V2</strong> pada branch <code>main</code>.
             </p>
           </div>
 
           <div className="pt-3 border-t border-slate-100 text-[11px] space-y-1.5 font-mono text-slate-600">
             <div className="flex justify-between">
-              <span className="text-slate-400">Git Ignore:</span>
-              <span className="text-emerald-600 font-bold">.gitignore (Aktif)</span>
+              <span className="text-slate-400">Repository:</span>
+              <span className="font-bold text-slate-800 truncate max-w-[140px]" title="ayobisnisumrah-maker/Nuzultrip-Equity-V2">
+                Nuzultrip-Equity-V2
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-400">Branch:</span>
-              <span className="font-bold text-slate-800">main</span>
+              <span className="font-bold text-emerald-600">main</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-400">CI/CD:</span>
-              <span>Vercel Auto-deploy</span>
+              <span className="text-slate-400">Sync Engine:</span>
+              <span className="text-emerald-600 font-bold">Google AI Studio Sync</span>
             </div>
           </div>
         </div>
