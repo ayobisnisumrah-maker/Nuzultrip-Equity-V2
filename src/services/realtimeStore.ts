@@ -658,58 +658,39 @@ class RealtimeStore {
   }
 
   public async addReport(report: Omit<InvestorReport, 'id'>): Promise<InvestorReport> {
-    const newId = `REP-${Date.now().toString(36).toUpperCase()}`;
-    const newReport: InvestorReport = {
-      ...report,
-      id: newId,
-    };
-
-    this.reports = [newReport, ...this.reports];
-    this.saveToStorage();
-    this.notify();
-
-    // Supabase persist
-    if (supabase && isSupabaseConfigured) {
-      try {
-        await supabase.from('investor_reports').insert([
-          {
-            id: newReport.id,
-            title: newReport.title,
-            period: newReport.period,
-            date: newReport.date,
-            category: newReport.category,
-            summary: newReport.summary,
-            content_details: newReport.contentDetails,
-            file_size: newReport.fileSize,
-            file_type: newReport.fileType,
-            is_new: newReport.isNew,
-            auditor: newReport.auditor,
-            highlights: newReport.highlights,
-            download_url: newReport.downloadUrl,
-          },
-        ]);
-      } catch (err) {
-        console.warn('Supabase addReport sync error:', err);
-      }
+    if (!appSchema || !supabase || !isSupabaseConfigured) {
+      throw new Error('Koneksi Supabase production belum tersedia.');
     }
 
-    return newReport;
+    const { data: periods, error: periodError } = await supabase
+      .from('financial_periods')
+      .select('id,starts_on,ends_on,status')
+      .order('starts_on', { ascending: false })
+      .limit(1);
+    if (periodError) throw new Error(periodError.message);
+    const period = periods?.[0];
+    if (!period) throw new Error('Belum ada periode keuangan production. Buat periode keuangan terlebih dahulu.');
+
+    const source = report.auditor ? 'audited' : 'internal';
+    const { data: reportId, error } = await appSchema.rpc('create_financial_report_with_draft', {
+      p_financial_period_id: period.id,
+      p_title: report.title,
+      p_summary: report.summary || null,
+      p_visibility: 'investors',
+      p_source: source,
+      p_prepared_by: report.auditor || null,
+      p_notes: report.contentDetails || null,
+    });
+    if (error) throw new Error(error.message || 'Laporan gagal dibuat.');
+
+    await this.refreshFromProduction();
+    const synced = this.reports.find((item) => item.id === reportId);
+    if (!synced) throw new Error('Laporan dibuat tetapi belum dapat dibaca kembali dari production.');
+    return synced;
   }
 
-  public async deleteReport(id: string): Promise<boolean> {
-    this.reports = this.reports.filter((r) => r.id !== id);
-    this.saveToStorage();
-    this.notify();
-
-    if (supabase && isSupabaseConfigured) {
-      try {
-        await supabase.from('investor_reports').delete().eq('id', id);
-      } catch (err) {
-        console.warn('Supabase deleteReport sync error:', err);
-      }
-    }
-
-    return true;
+  public async deleteReport(_id: string): Promise<boolean> {
+    throw new Error('Laporan resmi tidak dihapus langsung. Gunakan workflow arsip/versioning agar audit trail tetap utuh.');
   }
 
   // --- CASHIER & TRANSACTIONS API ---
@@ -720,57 +701,51 @@ class RealtimeStore {
   public async createTransaction(
     tx: Omit<CashierTransaction, 'id' | 'invoiceNumber' | 'createdAt'>
   ): Promise<CashierTransaction> {
-    const now = new Date();
-    const dateCode = now.toISOString().slice(0, 10).replace(/-/g, '');
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    const invoiceNumber = `INV/NZ/${dateCode}/${randomSuffix}`;
-    const newId = `TRX-${Date.now()}`;
-
-    const newTx: CashierTransaction = {
-      ...tx,
-      id: newId,
-      invoiceNumber,
-      createdAt: now.toLocaleString('id-ID'),
-    };
-
-    this.transactions = [newTx, ...this.transactions];
-
-    // If transaction is equity purchase, automatically reduce available units
-    if (newTx.transactionType === 'equity_purchase' && newTx.unitsCount) {
-      this.portalSettings.availableUnits = Math.max(
-        0,
-        this.portalSettings.availableUnits - newTx.unitsCount
-      );
+    if (!appSchema || !supabase || !isSupabaseConfigured) {
+      throw new Error('Koneksi Supabase production belum tersedia.');
     }
 
-    this.saveToStorage();
-    this.notify();
+    const quantity = tx.transactionType === 'equity_purchase' ? Number(tx.unitsCount || 1) : 1;
+    const unitPrice = quantity > 0 ? Number(tx.amountTotal || 0) / quantity : Number(tx.amountTotal || 0);
+    const { data: invoiceId, error: createError } = await appSchema.rpc('create_finance_invoice', {
+      p_customer_name: tx.customerName,
+      p_customer_email: tx.customerEmail || null,
+      p_customer_phone: tx.customerPhone || null,
+      p_customer_address: null,
+      p_due_on: new Date().toISOString().slice(0, 10),
+      p_notes: tx.notes || null,
+      p_items: [{
+        name: tx.transactionType === 'equity_purchase' ? 'Unit Equity Nuzultrip' : tx.transactionType,
+        description: tx.notes || null,
+        quantity,
+        unit_label: tx.transactionType === 'equity_purchase' ? 'unit' : 'layanan',
+        unit_price: unitPrice,
+        discount_amount: 0,
+        tax_rate: 0,
+      }],
+    });
+    if (createError) throw new Error(createError.message || 'Invoice gagal dibuat.');
 
-    // Supabase persist
-    if (supabase && isSupabaseConfigured) {
-      try {
-        await supabase.from('cashier_transactions').insert([
-          {
-            id: newTx.id,
-            invoice_number: newTx.invoiceNumber,
-            transaction_type: newTx.transactionType,
-            customer_name: newTx.customerName,
-            customer_phone: newTx.customerPhone,
-            customer_email: newTx.customerEmail,
-            units_count: newTx.unitsCount || 0,
-            amount_total: newTx.amountTotal,
-            payment_method: newTx.paymentMethod,
-            payment_status: newTx.paymentStatus,
-            notes: newTx.notes,
-            created_by: newTx.createdBy,
-          },
-        ]);
-      } catch (err) {
-        console.warn('Supabase createTransaction sync error:', err);
-      }
+    const { error: issueError } = await appSchema.rpc('issue_finance_invoice', { p_invoice_id: invoiceId });
+    if (issueError) throw new Error(issueError.message || 'Invoice gagal diterbitkan.');
+
+    if (tx.paymentStatus === 'Lunas' && Number(tx.amountTotal) > 0) {
+      const { error: paymentError } = await appSchema.rpc('record_finance_payment', {
+        p_invoice_id: invoiceId,
+        p_amount: Number(tx.amountTotal),
+        p_method: tx.paymentMethod,
+        p_received_at: new Date().toISOString(),
+        p_external_reference: null,
+        p_notes: tx.notes || null,
+        p_idempotency_key: `dashboard-${invoiceId}-${Number(tx.amountTotal)}`,
+      });
+      if (paymentError) throw new Error(paymentError.message || 'Pembayaran invoice gagal dicatat.');
     }
 
-    return newTx;
+    await this.refreshFromProduction();
+    const synced = this.transactions.find((item) => item.id === invoiceId);
+    if (!synced) throw new Error('Transaksi dibuat tetapi belum dapat dibaca kembali dari production.');
+    return synced;
   }
 
   // --- DIVIDENDS API ---
