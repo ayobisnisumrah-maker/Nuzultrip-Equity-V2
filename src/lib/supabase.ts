@@ -13,6 +13,12 @@ export const isSupabaseConfigured = Boolean(
 export const supabase: SupabaseClient | null = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey, {
       db: { schema: 'public' },
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storageKey: 'nuzultrip-equity-auth',
+      },
       realtime: {
         params: {
           eventsPerSecond: 10,
