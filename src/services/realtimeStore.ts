@@ -342,81 +342,236 @@ class RealtimeStore {
     if (!supabase || !isSupabaseConfigured) return;
 
     try {
-      // 1. Fetch remote reports
-      const { data: remoteReports, error: repError } = await supabase
-        .from('investor_reports')
-        .select('*')
-        .order('created_at', { ascending: false });
+      // Production is authoritative. localStorage is only a temporary UI cache/fallback.
+      const [
+        reportsResult,
+        invoicesResult,
+        dividendsResult,
+        transfersResult,
+        inheritanceResult,
+        auditResult,
+        inquiriesResult,
+      ] = await Promise.all([
+        supabase
+          .from('financial_reports')
+          .select('id,title,summary,status,visibility,created_at,updated_at,financial_periods(fiscal_year,period_index,starts_on,ends_on)')
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('finance_invoices')
+          .select('id,reference,status,customer_name,customer_email,customer_phone,grand_total,paid_total,notes,created_at')
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('profit_distribution_allocations')
+          .select('id,allocation_amount,status,paid_at,payment_reference,created_at,ownership_bps,profit_distributions(period_start,period_end)')
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('ownership_transfers')
+          .select('id,from_investor_id,units,status,requested_at,requested_unit_price,agreed_unit_price,rejection_reason,notes,transfer_kind')
+          .order('requested_at', { ascending: false }),
+        supabase
+          .from('ownership_inheritance')
+          .select('id,current_investor_id,beneficiary_name,beneficiary_email,beneficiary_phone,units,status,requested_at,rejection_reason,notes')
+          .order('requested_at', { ascending: false }),
+        supabase
+          .from('audit_logs')
+          .select('id,action,entity_type,actor_label,summary,created_at')
+          .order('created_at', { ascending: false })
+          .limit(100),
+        supabase
+          .from('portal_inquiries')
+          .select('id,name,email,phone,message,status,created_at,handled_at')
+          .order('created_at', { ascending: false })
+          .limit(100),
+      ]);
 
-      if (!repError && remoteReports && remoteReports.length > 0) {
-        this.reports = remoteReports.map((r: any) => ({
-          id: r.id,
-          title: r.title,
-          period: r.period,
-          date: r.date,
-          category: r.category,
-          summary: r.summary,
-          fileSize: r.file_size || '2.5 MB',
-          fileType: r.file_type || 'PDF',
-          isNew: r.is_new,
-          auditor: r.auditor,
-          highlights: r.highlights || [],
-          contentDetails: r.content_details,
-          downloadUrl: r.download_url,
-        }));
-        this.saveToStorage();
-        this.notify();
+      if (!reportsResult.error) {
+        this.reports = (reportsResult.data || []).map((r: any) => {
+          const p = Array.isArray(r.financial_periods) ? r.financial_periods[0] : r.financial_periods;
+          const period = p
+            ? `${p.starts_on || ''} - ${p.ends_on || ''}`
+            : 'Periode laporan';
+          return {
+            id: r.id,
+            title: r.title,
+            period,
+            date: new Date(r.updated_at || r.created_at).toLocaleDateString('id-ID'),
+            category: 'keuangan' as const,
+            summary: r.summary || 'Laporan keuangan resmi Nuzultrip.',
+            fileSize: '-',
+            fileType: 'DIGITAL',
+            isNew: r.status === 'published',
+            highlights: [],
+            contentDetails: r.summary || 'Laporan tersedia sesuai hak akses investor.',
+          };
+        });
       }
 
-      // 2. Fetch remote transactions
-      const { data: remoteTx, error: txError } = await supabase
-        .from('cashier_transactions')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (!txError && remoteTx && remoteTx.length > 0) {
-        this.transactions = remoteTx.map((t: any) => ({
+      if (!invoicesResult.error) {
+        this.transactions = (invoicesResult.data || []).map((t: any) => ({
           id: t.id,
-          invoiceNumber: t.invoice_number,
-          transactionType: t.transaction_type,
-          customerName: t.customer_name,
-          customerPhone: t.customer_phone,
-          customerEmail: t.customer_email,
-          unitsCount: t.units_count,
-          amountTotal: Number(t.amount_total),
-          paymentMethod: t.payment_method,
-          paymentStatus: t.payment_status,
-          notes: t.notes,
-          createdBy: t.created_by,
+          invoiceNumber: t.reference,
+          transactionType: 'equity_purchase' as const,
+          customerName: t.customer_name || '-',
+          customerPhone: t.customer_phone || '-',
+          customerEmail: t.customer_email || '-',
+          amountTotal: Number(t.grand_total || 0),
+          paymentMethod: 'bank_transfer_bsi' as const,
+          paymentStatus:
+            Number(t.paid_total || 0) >= Number(t.grand_total || 0)
+              ? ('Lunas' as const)
+              : ('Menunggu Verifikasi' as const),
+          notes: t.notes || undefined,
+          createdBy: 'Supabase',
           createdAt: t.created_at,
         }));
-        this.saveToStorage();
-        this.notify();
       }
 
-      // 3. Setup realtime channel
-      this.channel = supabase
-        .channel('nuzultrip_realtime_channel')
-        .on(
+      if (!dividendsResult.error) {
+        this.dividends = (dividendsResult.data || []).map((d: any) => {
+          const dist = Array.isArray(d.profit_distributions)
+            ? d.profit_distributions[0]
+            : d.profit_distributions;
+          const amount = Number(d.allocation_amount || 0);
+          return {
+            id: d.id,
+            period: dist ? `${dist.period_start} - ${dist.period_end}` : 'Periode distribusi',
+            paymentDate: d.paid_at
+              ? new Date(d.paid_at).toLocaleDateString('id-ID')
+              : 'Menunggu pembayaran',
+            amountPerUnit: amount,
+            units: 1,
+            totalGross: amount,
+            taxDeduction: 0,
+            totalNet: amount,
+            status: d.status === 'paid' ? ('Berhasil' as const) : ('Diproses' as const),
+            referenceNumber: d.payment_reference || d.id,
+            paymentMethod: 'Transfer Bank',
+          };
+        });
+      }
+
+      if (!transfersResult.error || !inheritanceResult.error) {
+        const saleRequests: ShareTransferRequest[] = (transfersResult.data || []).map((r: any) => {
+          const unitPrice = Number(r.agreed_unit_price || r.requested_unit_price || 0);
+          return {
+            id: r.id,
+            type: 'sale',
+            investorId: r.from_investor_id,
+            investorName: 'Investor',
+            investorEmail: '',
+            investorPhone: '',
+            units: Number(r.units || 0),
+            unitPrice,
+            totalValue: unitPrice * Number(r.units || 0),
+            status:
+              r.status === 'completed' || r.status === 'approved'
+                ? 'Disetujui'
+                : r.status === 'rejected'
+                ? 'Ditolak'
+                : r.status === 'processing'
+                ? 'Diproses Notaris'
+                : 'Menunggu Verifikasi',
+            createdAt: r.requested_at,
+            saleReason: r.notes || undefined,
+            adminNotes: r.rejection_reason || undefined,
+          };
+        });
+        const inheritanceRequests: ShareTransferRequest[] = (inheritanceResult.data || []).map((r: any) => ({
+          id: r.id,
+          type: 'inheritance',
+          investorId: r.current_investor_id,
+          investorName: 'Investor',
+          investorEmail: '',
+          investorPhone: '',
+          units: Number(r.units || 0),
+          unitPrice: 0,
+          totalValue: 0,
+          status:
+            r.status === 'completed' || r.status === 'approved'
+              ? 'Disetujui'
+              : r.status === 'rejected'
+              ? 'Ditolak'
+              : 'Menunggu Verifikasi',
+          createdAt: r.requested_at,
+          heirName: r.beneficiary_name,
+          heirPhone: r.beneficiary_phone || undefined,
+          heirEmail: r.beneficiary_email || undefined,
+          inheritanceNotes: r.notes || undefined,
+          adminNotes: r.rejection_reason || undefined,
+        }));
+        this.requests = [...saleRequests, ...inheritanceRequests].sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      }
+
+      if (!auditResult.error) {
+        this.auditLogs = (auditResult.data || []).map((l: any) => ({
+          id: l.id,
+          action: l.action,
+          category: 'SISTEM' as const,
+          user: l.actor_label || 'Sistem',
+          details: l.summary || l.entity_type || '-',
+          timestamp: l.created_at,
+          status: 'info' as const,
+        }));
+      }
+
+      if (!inquiriesResult.error) {
+        this.messages = (inquiriesResult.data || []).map((m: any) => ({
+          id: m.id,
+          senderName: m.name,
+          senderPhone: m.phone || '',
+          senderEmail: m.email || '',
+          category: 'umum' as const,
+          subject: 'Pesan Portal',
+          message: m.message,
+          status: m.status === 'resolved' || m.status === 'replied' ? 'replied' : m.status === 'read' ? 'read' : 'unread',
+          createdAt: m.created_at,
+          repliedAt: m.handled_at || undefined,
+        }));
+      }
+
+      this.saveToStorage();
+      this.notify();
+
+      if (this.channel) {
+        await supabase.removeChannel(this.channel);
+      }
+
+      const realtimeTables = [
+        'financial_reports',
+        'finance_invoices',
+        'finance_payments',
+        'profit_distributions',
+        'profit_distribution_allocations',
+        'ownership_holdings',
+        'ownership_transfers',
+        'ownership_inheritance',
+        'investors',
+        'portal_inquiries',
+        'notifications',
+        'documents',
+        'document_versions',
+      ];
+
+      let channel = supabase.channel('nuzultrip-production-realtime');
+      realtimeTables.forEach((table) => {
+        channel = channel.on(
           'postgres_changes',
-          { event: '*', schema: 'public', table: 'investor_reports' },
-          (payload) => {
-            console.log('Realtime Supabase Event (Reports):', payload);
-            this.initSupabaseSync();
+          { event: '*', schema: 'public', table },
+          () => {
+            void this.refreshFromProduction();
           }
-        )
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'cashier_transactions' },
-          (payload) => {
-            console.log('Realtime Supabase Event (Transactions):', payload);
-            this.initSupabaseSync();
-          }
-        )
-        .subscribe();
+        );
+      });
+      this.channel = channel.subscribe();
     } catch (err) {
-      console.warn('Realtime Supabase connection error:', err);
+      console.warn('Realtime production sync error:', err);
     }
+  }
+
+  public async refreshFromProduction(): Promise<void> {
+    await this.initSupabaseSync();
   }
 
   public subscribe(listener: StoreListener): () => void {
