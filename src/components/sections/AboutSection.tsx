@@ -3,12 +3,28 @@ import { Container } from '../layout/Container';
 import { Eyebrow } from '../ui/Eyebrow';
 import { AnimatedNumber } from '../ui/AnimatedNumber';
 import { ABOUT_METRICS } from '../../data/landingData';
+import { loadPublicHome } from '../../services/publicPortalService';
 import { realtimeStore, PortalSettings } from '../../services/realtimeStore';
 
 export const AboutSection: React.FC = () => {
-  const [settings, setSettings] = useState<PortalSettings>(() =>
-    realtimeStore.getPortalSettings()
-  );
+  const [settings, setSettings] = useState<PortalSettings>(() => realtimeStore.getPortalSettings());
+  const [cmsIntro, setCmsIntro] = useState<any>(null);
+  const [cmsMetrics, setCmsMetrics] = useState<any[] | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const syncCms = async () => {
+      try {
+        const sections = await loadPublicHome();
+        if (!active) return;
+        setCmsIntro(sections.find((s) => s.anchorId === 'tentang-nuzultrip')?.content || null);
+        setCmsMetrics(sections.find((s) => s.anchorId === 'statistik-utama')?.content?.metrics || null);
+      } catch { /* keep current published UI fallback */ }
+    };
+    void syncCms();
+    const timer = window.setInterval(syncCms, 15000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, []);
 
   useEffect(() => {
     const update = () => {
@@ -26,18 +42,18 @@ export const AboutSection: React.FC = () => {
       <Container size="default">
         {/* Header - Eyebrow & Headline 2 Baris Rata Tengah */}
         <div className="text-center max-w-[860px] mx-auto mb-12 sm:mb-16 flex flex-col items-center">
-          <Eyebrow>TENTANG KAMI</Eyebrow>
+          <Eyebrow>{cmsIntro?.eyebrow || 'TENTANG KAMI'}</Eyebrow>
           <h2 className="font-h2 font-bold text-[#111111] leading-[1.18] tracking-tight max-w-[820px] text-center">
-            {settings.aboutTitle || (
+            {cmsIntro?.title || settings.aboutTitle || (
               <>
                 Menghadirkan Inovasi Teknologi<br className="hidden sm:inline" />
                 dengan Integrasi Berkelanjutan
               </>
             )}
           </h2>
-          {settings.aboutDescription && (
+          {(cmsIntro?.description || settings.aboutDescription) && (
             <p className="mt-4 text-[15px] sm:text-[16px] text-[#555555] max-w-2xl text-center leading-relaxed">
-              {settings.aboutDescription}
+              {cmsIntro?.description || settings.aboutDescription}
             </p>
           )}
         </div>
@@ -45,7 +61,7 @@ export const AboutSection: React.FC = () => {
         {/* Outline Grid System - Semua tulisan rata tengah, garis pemisah sejajar */}
         <div className="border border-black/[0.14] rounded-2xl overflow-hidden bg-white/50 backdrop-blur-xs shadow-xs">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 divide-y sm:divide-y-0 lg:divide-x divide-black/[0.12]">
-            {ABOUT_METRICS.map((item, index) => (
+            {(cmsMetrics && cmsMetrics.length ? cmsMetrics.map((m:any,i:number)=>({id:`cms-${i}`,value:Number(String(m.value||'0').replace(/[^0-9.,]/g,'').replace(',','.'))||0,prefix:String(m.value||'').trim().startsWith('Rp')?'Rp ':'',suffix:String(m.value||'').replace(/[0-9.,]/g,'').replace(/^Rp\s*/,'').trim()?` ${String(m.value).replace(/[0-9.,]/g,'').replace(/^Rp\s*/,'').trim()}`:'',label:m.label,description:m.description,customDisplay:m.value})) : ABOUT_METRICS).map((item:any, index:number) => (
               <div
                 key={item.id}
                 className={`p-6 sm:p-7 flex flex-col justify-between items-center text-center transition-colors duration-200 hover:bg-black/[0.03] group ${
