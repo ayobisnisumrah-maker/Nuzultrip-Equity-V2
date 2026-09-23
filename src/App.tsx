@@ -22,8 +22,14 @@ import { ServiceItem, InvestorInfoItem, ArticleItem } from './data/landingData';
 
 export default function App() {
   const [isInterestModalOpen, setIsInterestModalOpen] = useState(false);
+  const [selectedUnits, setSelectedUnits] = useState<number>(1);
   const [isPitchdeckModalOpen, setIsPitchdeckModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+
+  const handleOpenInterest = (units: number = 1) => {
+    setSelectedUnits(units);
+    setIsInterestModalOpen(true);
+  };
   const [detailModal, setDetailModal] = useState<{
     isOpen: boolean;
     title: string;
@@ -180,14 +186,14 @@ export default function App() {
       {/* Sticky Header */}
       <Header
         onOpenLogin={() => setIsLoginModalOpen(true)}
-        onOpenInterest={() => setIsInterestModalOpen(true)}
+        onOpenInterest={() => handleOpenInterest(1)}
       />
 
       {/* Main Content Sections */}
       <main className="flex-1">
         {/* 01. Hero Section */}
         <HeroSection
-          onOpenInterest={() => setIsInterestModalOpen(true)}
+          onOpenInterest={() => handleOpenInterest(1)}
           onOpenPitchdeck={() => setIsPitchdeckModalOpen(true)}
         />
 
@@ -196,7 +202,7 @@ export default function App() {
 
         {/* 03. Peluang Equity Section */}
         <EquitySection
-          onOpenInterest={() => setIsInterestModalOpen(true)}
+          onOpenInterest={(units) => handleOpenInterest(units || 1)}
           onOpenDetail={handleOpenEquityDetail}
         />
 
@@ -209,7 +215,7 @@ export default function App() {
         {/* 06. Proses Section (Dark) */}
         <ProcessSection
           onOpenDetail={handleOpenProcessDetail}
-          onOpenInterest={() => setIsInterestModalOpen(true)}
+          onOpenInterest={() => handleOpenInterest(1)}
         />
 
         {/* 07. Roadmap Section */}
@@ -223,7 +229,7 @@ export default function App() {
 
         {/* 10. Quick Action Section (Dark) */}
         <QuickActionSection
-          onOpenInterest={() => setIsInterestModalOpen(true)}
+          onOpenInterest={() => handleOpenInterest(1)}
           onOpenPitchdeck={() => setIsPitchdeckModalOpen(true)}
         />
 
@@ -233,7 +239,7 @@ export default function App() {
 
       {/* 12. Footer (Dark) */}
       <Footer
-        onOpenInterest={() => setIsInterestModalOpen(true)}
+        onOpenInterest={() => handleOpenInterest(1)}
         onOpenPitchdeck={() => setIsPitchdeckModalOpen(true)}
         onOpenDetail={handleOpenFooterDetail}
       />
@@ -242,6 +248,7 @@ export default function App() {
       <EquityInterestModal
         isOpen={isInterestModalOpen}
         onClose={() => setIsInterestModalOpen(false)}
+        initialUnits={selectedUnits}
       />
 
       <PitchdeckModal

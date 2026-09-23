@@ -3,10 +3,11 @@ import { Container } from '../layout/Container';
 import { Eyebrow } from '../ui/Eyebrow';
 import { ArrowButton } from '../ui/ArrowButton';
 import { AnimatedNumber } from '../ui/AnimatedNumber';
+import { EquityRoiCalculator } from '../equity/EquityRoiCalculator';
 import { EQUITY_METRICS, IMAGES } from '../../data/landingData';
 
 interface EquitySectionProps {
-  onOpenInterest: () => void;
+  onOpenInterest: (units?: number) => void;
   onOpenDetail: () => void;
 }
 
@@ -32,12 +33,13 @@ export const EquitySection: React.FC<EquitySectionProps> = ({
               </h2>
               <p className="text-[16px] sm:text-[17px] text-[#555555] leading-[1.65] max-w-[360px]">
                 Jadilah bagian dari perjalanan besar Nuzultrip dengan kepemilikan
-                yang jelas, transparan, dan terstruktur.
+                yang jelas, transparan, dan terstruktur. Gunakan kalkulator di bawah
+                untuk mensimulasikan estimasi dividen bulanan dan potensi ROI Anda.
               </p>
             </div>
 
-            {/* Bottom-aligned CTA link */}
-            <div className="pt-8 sm:pt-10 mt-auto">
+            {/* Bottom-aligned CTA links */}
+            <div className="pt-8 sm:pt-10 mt-auto flex flex-col sm:flex-row lg:flex-col items-start gap-3">
               <ArrowButton
                 variant="link"
                 onClick={onOpenDetail}
@@ -45,6 +47,12 @@ export const EquitySection: React.FC<EquitySectionProps> = ({
               >
                 Lebih Detail Penawaran
               </ArrowButton>
+              <a
+                href="#kalkulator-roi"
+                className="inline-flex items-center gap-1.5 text-[13.5px] font-bold text-emerald-700 hover:text-emerald-800 transition-colors"
+              >
+                <span>Simulasi Kalkulator ROI ↓</span>
+              </a>
             </div>
           </div>
 
@@ -99,7 +107,7 @@ export const EquitySection: React.FC<EquitySectionProps> = ({
                 <button
                   type="button"
                   id="equity-card-interest-btn"
-                  onClick={onOpenInterest}
+                  onClick={() => onOpenInterest(1)}
                   className="w-full py-3.5 px-4 rounded-xl bg-white text-[#090909] font-bold text-[14px] flex items-center justify-center gap-2 hover:bg-[#EDEDEB] active:scale-98 transition-all duration-200 shadow-sm group/btn cursor-pointer"
                 >
                   <span>Ajukan Minat Equity</span>
@@ -108,6 +116,11 @@ export const EquitySection: React.FC<EquitySectionProps> = ({
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Interactive ROI Projection Calculator Feature */}
+        <div className="mt-14 sm:mt-20 pt-10 sm:pt-14 border-t border-black/[0.08]">
+          <EquityRoiCalculator onOpenInterest={onOpenInterest} />
         </div>
       </Container>
     </section>

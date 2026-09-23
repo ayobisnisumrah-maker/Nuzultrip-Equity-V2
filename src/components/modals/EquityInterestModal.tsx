@@ -1,21 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, CheckCircle, Calculator, ShieldCheck, ArrowRight } from 'lucide-react';
 
 interface EquityInterestModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialUnits?: number;
 }
 
 export const EquityInterestModal: React.FC<EquityInterestModalProps> = ({
   isOpen,
   onClose,
+  initialUnits = 1,
 }) => {
-  const [units, setUnits] = useState<number>(1);
+  const [units, setUnits] = useState<number>(initialUnits);
   const [name, setName] = useState<string>('');
   const [phone, setPhone] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [investorType, setInvestorType] = useState<string>('Individu');
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (isOpen && initialUnits) {
+      setUnits(initialUnits);
+    }
+  }, [isOpen, initialUnits]);
 
   if (!isOpen) return null;
 
