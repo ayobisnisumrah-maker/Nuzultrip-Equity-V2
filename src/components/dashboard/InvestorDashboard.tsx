@@ -29,7 +29,7 @@ import {
   FileCheck,
 } from 'lucide-react';
 import {
-  DEMO_INVESTOR,
+  InvestorProfile,
   InvestorReport,
   DividendRecord,
 } from '../../data/investorData';
@@ -68,6 +68,9 @@ export const InvestorDashboard: React.FC<InvestorDashboardProps> = ({
   const [transferRequests, setTransferRequests] = useState<ShareTransferRequest[]>(
     realtimeStore.getTransferRequests()
   );
+  const [investor, setInvestor] = useState<InvestorProfile | null>(
+    realtimeStore.getInvestorProfile()
+  );
 
   // Liquidity modals
   const [showSaleModal, setShowSaleModal] = useState(false);
@@ -79,6 +82,7 @@ export const InvestorDashboard: React.FC<InvestorDashboardProps> = ({
       setReports(realtimeStore.getReports());
       setDividends(realtimeStore.getDividends());
       setTransferRequests(realtimeStore.getTransferRequests());
+      setInvestor(realtimeStore.getInvestorProfile());
     };
     const unsubscribe = realtimeStore.subscribe(sync);
     return () => unsubscribe();
@@ -210,14 +214,14 @@ export const InvestorDashboard: React.FC<InvestorDashboardProps> = ({
             {/* Investor Card Pill */}
             <div className="hidden md:flex items-center gap-2.5 pl-2 border-l border-slate-200">
               <div className="w-8 h-8 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shadow-xs">
-                {DEMO_INVESTOR.name.slice(0, 2)}
+                {investor?.name.slice(0, 2)}
               </div>
               <div className="text-left">
                 <div className="text-xs font-bold text-slate-800 leading-tight">
-                  {DEMO_INVESTOR.name}
+                  {investor?.name}
                 </div>
                 <div className="text-[10.5px] text-emerald-600 font-medium">
-                  {DEMO_INVESTOR.id} · {DEMO_INVESTOR.unitsOwned} Unit
+                  {investor?.id} · {investor?.unitsOwned} Unit
                 </div>
               </div>
             </div>
@@ -261,7 +265,7 @@ export const InvestorDashboard: React.FC<InvestorDashboardProps> = ({
                 Sertifikat Kepemilikan Unit Equity Aktif
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-                Selamat Datang, {DEMO_INVESTOR.name}
+                Selamat Datang, {investor?.name}
               </h1>
               <p className="text-sm text-slate-300 mt-1 max-w-xl">
                 Pantau laporan keuangan berkala, notulen RUPS, performa operasional ekosistem, dan riwayat penerimaan bagi hasil Nuzultrip secara transparan.
@@ -299,10 +303,10 @@ export const InvestorDashboard: React.FC<InvestorDashboardProps> = ({
                 <PieChart size={15} className="text-emerald-400" />
               </div>
               <div className="text-xl sm:text-2xl font-black text-white">
-                {DEMO_INVESTOR.unitsOwned} Unit
+                {investor?.unitsOwned} Unit
               </div>
               <div className="text-[11px] text-emerald-400 font-medium mt-1">
-                {DEMO_INVESTOR.equityPercentage}% Porsi Kepemilikan
+                {investor?.equityPercentage}% Porsi Kepemilikan
               </div>
             </div>
 
@@ -313,7 +317,7 @@ export const InvestorDashboard: React.FC<InvestorDashboardProps> = ({
                 <ShieldCheck size={15} className="text-emerald-400" />
               </div>
               <div className="text-xl sm:text-2xl font-black text-white">
-                {formatRupiah(DEMO_INVESTOR.totalInvestment)}
+                {formatRupiah(investor?.totalInvestment)}
               </div>
               <div className="text-[11px] text-slate-400 font-medium mt-1">
                 Terdaftar di Kemenkumham RI
@@ -327,10 +331,10 @@ export const InvestorDashboard: React.FC<InvestorDashboardProps> = ({
                 <TrendingUp size={15} className="text-emerald-400" />
               </div>
               <div className="text-xl sm:text-2xl font-black text-emerald-400">
-                {formatRupiah(DEMO_INVESTOR.totalDividendsReceived)}
+                {formatRupiah(investor?.totalDividendsReceived)}
               </div>
               <div className="text-[11px] text-slate-300 font-medium mt-1">
-                Akumulasi sejak {DEMO_INVESTOR.joinDate}
+                Akumulasi sejak {investor?.joinDate}
               </div>
             </div>
 
@@ -341,10 +345,10 @@ export const InvestorDashboard: React.FC<InvestorDashboardProps> = ({
                 <Calendar size={15} className="text-emerald-400" />
               </div>
               <div className="text-xl sm:text-2xl font-black text-white">
-                {formatRupiah(DEMO_INVESTOR.pendingDividend)}
+                {formatRupiah(investor?.pendingDividend)}
               </div>
               <div className="text-[11px] text-emerald-400 font-medium mt-1">
-                Est. Cair: {DEMO_INVESTOR.nextDividendDate}
+                Est. Cair: {investor?.nextDividendDate}
               </div>
             </div>
 
@@ -658,9 +662,9 @@ export const InvestorDashboard: React.FC<InvestorDashboardProps> = ({
                 <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-700">
                   <CreditCard size={15} className="text-emerald-600" />
                   <span>
-                    <strong>{DEMO_INVESTOR.bankAccount.bankName}</strong> ·{' '}
-                    {DEMO_INVESTOR.bankAccount.accountNumber} a/n{' '}
-                    {DEMO_INVESTOR.bankAccount.accountHolder}
+                    <strong>{investor?.bankAccount.bankName}</strong> ·{' '}
+                    {investor?.bankAccount.accountNumber} a/n{' '}
+                    {investor?.bankAccount.accountHolder}
                   </span>
                 </div>
               </div>
@@ -670,7 +674,7 @@ export const InvestorDashboard: React.FC<InvestorDashboardProps> = ({
                   Total Terakumulasi
                 </span>
                 <span className="text-xl sm:text-2xl font-black text-emerald-600">
-                  {formatRupiah(DEMO_INVESTOR.totalDividendsReceived)}
+                  {formatRupiah(investor?.totalDividendsReceived)}
                 </span>
               </div>
             </div>
