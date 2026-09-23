@@ -14,7 +14,7 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
-import { realtimeStore } from '../../services/realtimeStore';
+import { resolveSessionAccess } from '../../services/sessionAccessService';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -53,69 +53,39 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     e.preventDefault();
     setLoginError(null);
     setIsLoggingIn(true);
+    const cleanEmail = email.trim().toLowerCase();
 
-    const cleanEmail = email.trim();
-
-    // 1. Coba autentikasi via Supabase Auth jika terkonfigurasi
-    if (supabase && isSupabaseConfigured && cleanEmail.includes('@')) {
-      try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: cleanEmail,
-          password: password,
-        });
-
-        if (!error && data?.user) {
-          setIsLoggingIn(false);
-          const userEmail = data.user.email || cleanEmail;
-          setAuthenticatedUserEmail(userEmail);
-
-          // Cek apakah akun adalah Super Admin
-          const isAdmin =
-            cleanEmail.toLowerCase() === 'ayobisnisumrah@gmail.com' ||
-            userEmail.toLowerCase() === 'ayobisnisumrah@gmail.com' ||
-            cleanEmail.toLowerCase() === 'ptalhananberkahwisata@gmail.com' ||
-            userEmail.toLowerCase().includes('admin') ||
-            data.user.user_metadata?.role === 'admin' ||
-            data.user.user_metadata?.role === 'super_admin';
-
-          setAuthenticatedRole(isAdmin ? 'admin' : 'investor');
-          setIsSuccess(true);
-
-          realtimeStore.addAuditLog({
-            action: isAdmin ? 'Login Super Admin via Supabase Auth' : 'Login Investor via Supabase Auth',
-            category: 'AUTH',
-            user: userEmail,
-            details: `Autentikasi Supabase UID: ${data.user.id}`,
-            status: 'success',
-          });
-          return;
-        }
-
-        // Jika Supabase mengembalikan error credential
-        if (error) {
-          setIsLoggingIn(false);
-          setLoginError(
-            `Kredensial tidak valid: ${error.message}. Pastikan email & kata sandi akun Supabase Anda sudah benar.`
-          );
-          return;
-        }
-      } catch (err: any) {
-        console.warn('Supabase Auth error:', err);
-      }
+    if (!supabase || !isSupabaseConfigured) {
+      setIsLoggingIn(false);
+      setLoginError('Layanan autentikasi sedang tidak tersedia. Akses portal tidak dapat diberikan.');
+      return;
     }
 
-    // 2. Direct fallback jika Supabase belum terhubung ke internet
-    const isAdmin =
-      cleanEmail.toLowerCase() === 'ayobisnisumrah@gmail.com' ||
-      cleanEmail.toLowerCase() === 'ptalhananberkahwisata@gmail.com' ||
-      cleanEmail.toLowerCase().includes('admin');
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
+      if (error || !data.user) {
+        setLoginError('Email atau kata sandi tidak valid.');
+        return;
+      }
 
-    setTimeout(() => {
-      setIsLoggingIn(false);
-      setAuthenticatedUserEmail(cleanEmail || 'ayobisnisumrah@gmail.com');
-      setAuthenticatedRole(isAdmin ? 'admin' : 'investor');
+      const access = await resolveSessionAccess();
+      if (!access.isAdmin && !access.isInvestor) {
+        await supabase.auth.signOut({ scope: 'local' });
+        setLoginError(access.investorStatus
+          ? 'Akun investor belum memiliki status aktif/disetujui untuk mengakses portal.'
+          : 'Akun ini tidak memiliki akses ke portal Nuzultrip.');
+        return;
+      }
+
+      setAuthenticatedUserEmail(data.user.email || cleanEmail);
+      setAuthenticatedRole(access.isAdmin ? 'admin' : 'investor');
       setIsSuccess(true);
-    }, 450);
+    } catch {
+      await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined);
+      setLoginError('Autentikasi gagal. Silakan coba kembali.');
+    } finally {
+      setIsLoggingIn(false);
+    }
   };
 
   const handleEnterDestination = () => {
@@ -135,25 +105,20 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
     const targetEmail = resetEmail.trim();
 
-    if (supabase && isSupabaseConfigured && targetEmail.includes('@')) {
-      try {
-        const { error } = await supabase.auth.resetPasswordForEmail(targetEmail, {
-          redirectTo: window.location.origin,
-        });
-        if (error) {
-          setIsSendingReset(false);
-          setResetError(`Supabase: ${error.message}`);
-          return;
-        }
-      } catch (err: any) {
-        console.warn('Reset password error:', err);
-      }
-    }
-
-    setTimeout(() => {
+    if (!supabase || !isSupabaseConfigured || !targetEmail.includes('@')) {
       setIsSendingReset(false);
+      setResetError('Masukkan email akun yang valid.');
+      return;
+    }
+    try {
+      await supabase.auth.resetPasswordForEmail(targetEmail, { redirectTo: window.location.origin });
       setResetSuccess(true);
-    }, 500);
+    } catch {
+      // Keep response generic to avoid account enumeration.
+      setResetSuccess(true);
+    } finally {
+      setIsSendingReset(false);
+    }
   };
 
   return (
