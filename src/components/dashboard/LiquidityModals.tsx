@@ -9,31 +9,33 @@ import {
   CheckCircle2,
   FileCheck,
 } from 'lucide-react';
-import { DEMO_INVESTOR } from '../../data/investorData';
+import { InvestorProfile } from '../../data/investorData';
 import { realtimeStore } from '../../services/realtimeStore';
 
 interface SaleModalProps {
   isOpen: boolean;
+  investor: InvestorProfile | null;
   onClose: () => void;
   onSuccess: (msg: string) => void;
 }
 
 export const SaleRequestModal: React.FC<SaleModalProps> = ({
   isOpen,
+  investor,
   onClose,
   onSuccess,
 }) => {
   const [units, setUnits] = useState(1);
   const [bankName, setBankName] = useState('Bank Syariah Indonesia (BSI)');
   const [bankAccount, setBankAccount] = useState('7129840192');
-  const [bankAccountName, setBankAccountName] = useState(DEMO_INVESTOR.name);
+  const [bankAccountName, setBankAccountName] = useState('');
   const [reason, setReason] = useState('Kebutuhan likuiditas portofolio keluarga');
   const [agreed, setAgreed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOpen) return null;
 
-  const unitPrice = 100000000;
+  const unitPrice = investor?.unitPrice || 0;
   const totalValue = units * unitPrice;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -47,10 +49,10 @@ export const SaleRequestModal: React.FC<SaleModalProps> = ({
     try {
       await realtimeStore.createTransferRequest({
         type: 'sale',
-        investorId: DEMO_INVESTOR.id,
-        investorName: DEMO_INVESTOR.name,
-        investorEmail: DEMO_INVESTOR.email,
-        investorPhone: DEMO_INVESTOR.phone,
+        investorId: investor?.id || '',
+        investorName: investor?.name || '',
+        investorEmail: investor?.email || '',
+        investorPhone: investor?.phone || '',
         units,
         unitPrice,
         totalValue,
@@ -113,7 +115,7 @@ export const SaleRequestModal: React.FC<SaleModalProps> = ({
                 Jumlah Unit yang Ingin Dijual
               </label>
               <span className="text-xs text-slate-500">
-                Maksimal: {DEMO_INVESTOR.unitsOwned} Unit
+                Maksimal: {investor?.unitsOwned ?? 0} Unit
               </span>
             </div>
 
@@ -123,7 +125,7 @@ export const SaleRequestModal: React.FC<SaleModalProps> = ({
                   key={num}
                   type="button"
                   onClick={() => setUnits(num)}
-                  disabled={num > DEMO_INVESTOR.unitsOwned}
+                  disabled={num > investor?.unitsOwned ?? 0}
                   className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
                     units === num
                       ? 'border-emerald-500 bg-emerald-50 text-emerald-900 font-extrabold shadow-xs'
@@ -249,12 +251,14 @@ export const SaleRequestModal: React.FC<SaleModalProps> = ({
 
 interface InheritanceModalProps {
   isOpen: boolean;
+  investor: InvestorProfile | null;
   onClose: () => void;
   onSuccess: (msg: string) => void;
 }
 
 export const InheritanceModal: React.FC<InheritanceModalProps> = ({
   isOpen,
+  investor,
   onClose,
   onSuccess,
 }) => {
@@ -273,7 +277,7 @@ export const InheritanceModal: React.FC<InheritanceModalProps> = ({
 
   if (!isOpen) return null;
 
-  const unitPrice = 100000000;
+  const unitPrice = investor?.unitPrice || 0;
   const totalValue = units * unitPrice;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -291,10 +295,10 @@ export const InheritanceModal: React.FC<InheritanceModalProps> = ({
     try {
       await realtimeStore.createTransferRequest({
         type: 'inheritance',
-        investorId: DEMO_INVESTOR.id,
-        investorName: DEMO_INVESTOR.name,
-        investorEmail: DEMO_INVESTOR.email,
-        investorPhone: DEMO_INVESTOR.phone,
+        investorId: investor?.id || '',
+        investorName: investor?.name || '',
+        investorEmail: investor?.email || '',
+        investorPhone: investor?.phone || '',
         units,
         unitPrice,
         totalValue,
@@ -360,7 +364,7 @@ export const InheritanceModal: React.FC<InheritanceModalProps> = ({
                 Jumlah Unit yang Diwariskan
               </label>
               <span className="text-xs text-slate-500">
-                Tersedia: {DEMO_INVESTOR.unitsOwned} Unit
+                Tersedia: {investor?.unitsOwned ?? 0} Unit
               </span>
             </div>
 
@@ -370,7 +374,7 @@ export const InheritanceModal: React.FC<InheritanceModalProps> = ({
                   key={num}
                   type="button"
                   onClick={() => setUnits(num)}
-                  disabled={num > DEMO_INVESTOR.unitsOwned}
+                  disabled={num > investor?.unitsOwned ?? 0}
                   className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
                     units === num
                       ? 'border-emerald-500 bg-emerald-50 text-emerald-900 font-extrabold shadow-xs'
@@ -379,7 +383,7 @@ export const InheritanceModal: React.FC<InheritanceModalProps> = ({
                 >
                   <div className="text-sm">{num} Unit Saham</div>
                   <div className="text-[11px] text-slate-500 mt-0.5">
-                    (Nilai: Rp {(num * 100000000).toLocaleString('id-ID')})
+                    (Nilai: Rp {(num * unitPrice).toLocaleString('id-ID')})
                   </div>
                 </button>
               ))}
