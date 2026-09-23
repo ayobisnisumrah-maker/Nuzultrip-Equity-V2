@@ -203,6 +203,41 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (!adminAccess) return;
+    const allowed: Partial<Record<NavSection, boolean>> = {
+      dasbor: true,
+      investor: adminAccess.canViewInvestors,
+      pengajuan_investor: adminAccess.canViewInvestors,
+      dokumen_investor: adminAccess.canViewInvestors || adminAccess.canViewDocuments,
+      pesan: adminAccess.canViewMessages,
+      permintaan_masuk: adminAccess.canViewMessages || adminAccess.canViewInvestors,
+      penawaran_kepemilikan: adminAccess.canViewOwnership,
+      kepemilikan_investor: adminAccess.canViewOwnership,
+      transfer_kepemilikan: adminAccess.canViewOwnership,
+      pewarisan_kepemilikan: adminAccess.canViewOwnership,
+      ringkasan_keuangan: adminAccess.canViewFinance,
+      kasir_invoice: adminAccess.canViewFinance,
+      periode_keuangan: adminAccess.canViewFinance,
+      laporan_keuangan: adminAccess.canViewFinance,
+      kpi_keuangan: adminAccess.canViewFinance,
+      distribusi_bagi_hasil: adminAccess.canViewFinance,
+      pustaka_dokumen: adminAccess.canViewDocuments,
+      verifikasi_dokumen: adminAccess.canViewDocuments,
+      data_room: adminAccess.canViewDocuments,
+      ringkasan_portal: adminAccess.canViewPortal,
+      portal: adminAccess.canViewPortal,
+      dokumen_portal: adminAccess.canViewPortal || adminAccess.canViewDocuments,
+      pengaturan_portal: adminAccess.canManagePortal,
+      profil_perusahaan: adminAccess.canViewPortal,
+      administrator: adminAccess.isSuperAdmin,
+      role_permission: adminAccess.isSuperAdmin,
+      pengaturan: adminAccess.isSuperAdmin,
+      audit_log: adminAccess.canViewAudit,
+    };
+    if (!allowed[activeNav]) setActiveNav('dasbor');
+  }, [adminAccess, activeNav]);
+
   const pendingRequestsCount = transferRequests.filter(
     (r) => r.status === 'Menunggu Verifikasi'
   ).length;
