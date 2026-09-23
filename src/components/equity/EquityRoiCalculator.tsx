@@ -58,6 +58,18 @@ const UNIT_PRICE = 100_000_000; // Rp 100 Juta
 const OWNERSHIP_PER_UNIT = 0.8; // 0.8%
 const MAX_UNITS = 25; // Sesuai ketersediaan alokasi penawaran
 
+const formatCompactIdr = (value: number) => {
+  if (Math.abs(value) >= 1_000_000_000) {
+    const billions = value / 1_000_000_000;
+    return `Rp ${new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(billions)} Miliar`;
+  }
+  if (Math.abs(value) >= 1_000_000) {
+    const millions = value / 1_000_000;
+    return `Rp ${new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(millions)} Juta`;
+  }
+  return `Rp ${new Intl.NumberFormat('id-ID').format(value)}`;
+};
+
 export const EquityRoiCalculator: React.FC<EquityRoiCalculatorProps> = ({ onOpenInterest }) => {
   const [units, setUnits] = useState<number>(1);
   const [activeScenario, setActiveScenario] = useState<ScenarioType>('moderat');
@@ -183,10 +195,7 @@ Info resmi: nuzultrip.com/equity`;
                     Nilai Nominal Investasi
                   </div>
                   <div className="text-[20px] sm:text-[24px] font-extrabold text-[#111111] tracking-tight">
-                    Rp {(totalInvestment / 1_000_000).toLocaleString('id-ID')}{' '}
-                    <span className="text-[15px] sm:text-[16px] font-bold text-[#666666]">
-                      Juta
-                    </span>
+                    {formatCompactIdr(totalInvestment)}
                   </div>
                 </div>
 
@@ -419,7 +428,7 @@ Info resmi: nuzultrip.com/equity`;
                     Modal Investasi
                   </span>
                   <span className="text-[15px] font-bold text-white">
-                    Rp {(totalInvestment / 1_000_000).toLocaleString('id-ID')} Jt
+                    {formatCompactIdr(totalInvestment)}
                   </span>
                 </div>
               </div>
@@ -455,7 +464,7 @@ Info resmi: nuzultrip.com/equity`;
                     Bagi Hasil Tahunan:
                   </span>
                   <span className="text-[16px] sm:text-[17px] font-bold text-emerald-400 block">
-                    Rp {(annualDividend / 1_000_000).toLocaleString('id-ID')} Juta
+                    {formatCompactIdr(annualDividend)}
                   </span>
                   <span className="text-[10px] text-white/40">ROI {annualRoiRate}% / thn</span>
                 </div>
@@ -476,19 +485,19 @@ Info resmi: nuzultrip.com/equity`;
                 <div className="flex items-center justify-between text-[12.5px]">
                   <span className="text-white/70">Akumulasi Dividen 3 Tahun:</span>
                   <span className="font-bold text-white">
-                    Rp {(threeYearCumulative / 1_000_000).toLocaleString('id-ID')} Juta
+                    {formatCompactIdr(threeYearCumulative)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-[12.5px]">
                   <span className="text-white/70">Akumulasi Dividen 5 Tahun:</span>
                   <span className="font-bold text-emerald-400 text-[13.5px]">
-                    Rp {(fiveYearCumulative / 1_000_000).toLocaleString('id-ID')} Juta
+                    {formatCompactIdr(fiveYearCumulative)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-[12.5px] pt-1 border-t border-white/5 font-semibold">
                   <span className="text-white/90">Total Nilai (Modal + Dividen 5 Thn):</span>
                   <span className="font-extrabold text-white text-[14px]">
-                    Rp {((totalInvestment + fiveYearCumulative) / 1_000_000).toLocaleString('id-ID')} Jt
+                    {formatCompactIdr(totalInvestment + fiveYearCumulative)}
                   </span>
                 </div>
               </div>
