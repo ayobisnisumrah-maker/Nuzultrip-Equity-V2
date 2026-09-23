@@ -7,12 +7,10 @@ interface FooterProps {
   onOpenInterest?: () => void;
   onOpenPitchdeck?: () => void;
   onOpenDetail: (title?: string) => void;
-  onOpenSuperAdmin?: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
   onOpenDetail,
-  onOpenSuperAdmin,
 }) => {
   const [settings, setSettings] = useState<PortalSettings>(() =>
     realtimeStore.getPortalSettings()
@@ -180,15 +178,6 @@ export const Footer: React.FC<FooterProps> = ({
           <p>{settings.footerCopyright || '© 2026 PT. Swarna Dipa Wisata. All Rights Reserved.'}</p>
           <div className="flex items-center gap-4 text-center sm:text-right">
             <span>Platform Penawaran Equity Ekosistem Perjalanan Muslim Indonesia.</span>
-            {onOpenSuperAdmin && (
-              <button
-                type="button"
-                onClick={onOpenSuperAdmin}
-                className="text-amber-400 hover:text-amber-300 font-semibold transition-colors cursor-pointer text-xs flex items-center gap-1"
-              >
-                <span>⚙️ Super Admin</span>
-              </button>
-            )}
           </div>
         </div>
       </Container>
