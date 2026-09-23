@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { loadEquityCalculatorConfig } from '../../services/publicPortalService';
 import {
   Calculator,
   TrendingUp,
@@ -56,7 +57,7 @@ const SCENARIOS: Record<'konservatif' | 'moderat' | 'optimis', ScenarioConfig> =
 
 const UNIT_PRICE = 100_000_000; // Rp 100 Juta
 const OWNERSHIP_PER_UNIT = 0.8; // 0.8%
-const MAX_UNITS = 25; // Sesuai ketersediaan alokasi penawaran
+const maxUnits = 25; // Sesuai ketersediaan alokasi penawaran
 
 const formatCompactIdr = (value: number) => {
   if (Math.abs(value) >= 1_000_000_000) {
@@ -76,15 +77,45 @@ export const EquityRoiCalculator: React.FC<EquityRoiCalculatorProps> = ({ onOpen
   const [customRoi, setCustomRoi] = useState<number>(20);
   const [copied, setCopied] = useState<boolean>(false);
   const [viewMode, setViewMode] = useState<'ringkasan' | 'proyeksi5thn'>('ringkasan');
+  const [unitPrice, setUnitPrice] = useState(UNIT_PRICE);
+  const [ownershipPerUnit, setOwnershipPerUnit] = useState(OWNERSHIP_PER_UNIT);
+  const [maxUnits, setMaxUnits] = useState(maxUnits);
+  const [scenarioConfig, setScenarioConfig] = useState(SCENARIOS);
+  const [officialInfoUrl, setOfficialInfoUrl] = useState('https://www.nuzultrip.click');
+
+  useEffect(() => {
+    let active = true;
+    const sync = async () => {
+      try {
+        const config = await loadEquityCalculatorConfig();
+        if (!active || !config) return;
+        setUnitPrice(config.unitPrice);
+        setOwnershipPerUnit(config.ownershipPerUnit);
+        setMaxUnits(config.maxUnits);
+        setUnits((value) => Math.min(value, config.maxUnits));
+        setOfficialInfoUrl(config.officialInfoUrl || 'https://www.nuzultrip.click');
+        if (config.scenarios?.length) {
+          const next = { ...SCENARIOS };
+          config.scenarios.forEach((item) => {
+            if (item.key in next) next[item.key] = { id: item.key, label: item.label, tag: item.tag, rate: item.rate, description: item.description };
+          });
+          setScenarioConfig(next);
+        }
+      } catch { /* keep the current published UI if production config is temporarily unavailable */ }
+    };
+    void sync();
+    const timer = window.setInterval(sync, 15000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, []);
 
   // Determine active annual ROI rate
   const annualRoiRate = activeScenario === 'kustom'
     ? customRoi
-    : SCENARIOS[activeScenario].rate;
+    : scenarioConfig[activeScenario].rate;
 
   // Computations
-  const totalInvestment = units * UNIT_PRICE;
-  const ownershipPercentage = Number((units * OWNERSHIP_PER_UNIT).toFixed(2));
+  const totalInvestment = units * unitPrice;
+  const ownershipPercentage = Number((units * ownershipPerUnit).toFixed(2));
   const annualDividend = (totalInvestment * annualRoiRate) / 100;
   const monthlyDividend = Math.round(annualDividend / 12);
   const threeYearCumulative = annualDividend * 3;
@@ -114,7 +145,7 @@ export const EquityRoiCalculator: React.FC<EquityRoiCalculatorProps> = ({ onOpen
 - Estimasi Dividen Bulanan: Rp ${monthlyDividend.toLocaleString('id-ID')} / bulan
 - Estimasi Dividen Tahunan: Rp ${annualDividend.toLocaleString('id-ID')} / tahun
 - Akumulasi Dividen 5 Tahun: Rp ${fiveYearCumulative.toLocaleString('id-ID')}
-Info resmi: nuzultrip.com/equity`;
+Info resmi: ${officialInfoUrl}`;
 
     navigator.clipboard.writeText(text);
     setCopied(true);
@@ -176,7 +207,7 @@ Info resmi: nuzultrip.com/equity`;
               <label className="text-[14px] font-bold text-[#111111] flex items-center gap-2">
                 <span>1. Pilih Jumlah Unit Investasi</span>
                 <span className="text-[12px] font-normal text-[#777777]">
-                  (Maks. {MAX_UNITS} unit)
+                  (Maks. {maxUnits} unit)
                 </span>
               </label>
               <div className="flex items-center gap-2">
@@ -220,8 +251,8 @@ Info resmi: nuzultrip.com/equity`;
                   </div>
                   <button
                     type="button"
-                    onClick={() => setUnits((prev) => Math.min(MAX_UNITS, prev + 1))}
-                    disabled={units >= MAX_UNITS}
+                    onClick={() => setUnits((prev) => Math.min(maxUnits, prev + 1))}
+                    disabled={units >= maxUnits}
                     className="w-9 h-9 rounded-lg font-bold text-[18px] flex items-center justify-center text-[#222222] hover:bg-black/5 active:bg-black/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     aria-label="Tambah unit"
                   >
@@ -235,7 +266,7 @@ Info resmi: nuzultrip.com/equity`;
                 <input
                   type="range"
                   min="1"
-                  max={MAX_UNITS}
+                  max={maxUnits}
                   value={units}
                   onChange={(e) => setUnits(Number(e.target.value))}
                   className="w-full h-2 bg-black/10 rounded-lg appearance-none cursor-pointer accent-[#111111]"
@@ -244,7 +275,7 @@ Info resmi: nuzultrip.com/equity`;
                 <div className="flex justify-between text-[11px] font-medium text-[#888888]">
                   <span>1 Unit (Rp 100 Jt)</span>
                   <span>10 Unit (Rp 1 M)</span>
-                  <span>{MAX_UNITS} Unit (Rp 2.5 M)</span>
+                  <span>{maxUnits} Unit (Rp 2.5 M)</span>
                 </div>
               </div>
 
