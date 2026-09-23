@@ -67,7 +67,7 @@ import { MessagesInquiriesView } from './MessagesInquiriesView';
 import { FinancialManagementView } from './FinancialManagementView';
 import { SystemIntegrationsView } from './SystemIntegrationsView';
 import { isSupabaseConfigured } from '../../lib/supabase';
-import { AdminAccess, loadAdminAccess } from '../../services/adminAccessService';
+import { AdminAccess, loadAdminAccess } from '../../services/adminAccessService';\nimport { PublicDocumentManager } from './PublicDocumentManager';
 import { provisioningService } from '../../services/provisioningService';
 
 interface SuperAdminDashboardProps {
@@ -1446,6 +1446,10 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
           </div>
         </>
       )}
+
+          {activeNav === 'pustaka_dokumen' && adminAccess?.canViewDocuments && (
+            <PublicDocumentManager />
+          )}
 
           {/* DOKUMEN & LAPORAN MANAGEMENT SECTION */}
           {(activeNav === 'dokumen_investor' || activeNav === 'laporan_keuangan') && (
