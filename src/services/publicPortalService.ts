@@ -20,3 +20,39 @@ export async function transitionSection(id:string,target:'draft'|'review'|'appro
  if(!appSchema)throw new Error('Supabase production belum terhubung.');
  const {error}=await appSchema.rpc('transition_portal_section',{p_section_id:id,p_target:target});if(error)throw error;
 }
+
+
+export type EquityCalculatorConfig = {
+  unitPrice:number;
+  ownershipPerUnit:number;
+  maxUnits:number;
+  eyebrow?:string;
+  title?:string;
+  subtitle?:string;
+  officialInfoUrl?:string;
+  disclaimer?:string;
+  scenarios?:Array<{key:'konservatif'|'moderat'|'optimis';label:string;tag:string;rate:number;description:string}>;
+};
+
+export async function loadEquityCalculatorConfig():Promise<EquityCalculatorConfig|null>{
+  if(!supabase)return null;
+  const [{data:offering,error:offeringError},{data:section,error:sectionError}]=await Promise.all([
+    supabase.from('ownership_offerings').select('unit_price,unit_ownership_bps,total_units').eq('status','open').order('effective_from',{ascending:false}).limit(1).maybeSingle(),
+    supabase.from('portal_sections').select('published_version:portal_section_versions!portal_sections_published_version_id_fkey(content)').eq('anchor_id','kalkulator-equity').eq('status','published').eq('is_visible',true).maybeSingle()
+  ]);
+  if(offeringError)throw offeringError;
+  if(sectionError)throw sectionError;
+  if(!offering)return null;
+  const content=(section as any)?.published_version?.content||{};
+  return {
+    unitPrice:Number((offering as any).unit_price),
+    ownershipPerUnit:Number((offering as any).unit_ownership_bps)/100,
+    maxUnits:Math.min(Number(content.maxUnitsPerSimulation||25),Number((offering as any).total_units)),
+    eyebrow:content.eyebrow,
+    title:content.title,
+    subtitle:content.subtitle,
+    officialInfoUrl:content.officialInfoUrl,
+    disclaimer:content.disclaimer,
+    scenarios:Array.isArray(content.scenarios)?content.scenarios:undefined
+  };
+}
