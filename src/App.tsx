@@ -220,6 +220,15 @@ export default function App() {
     });
   };
 
+  useEffect(() => {
+    if (!accessReady || currentView !== 'landing') return;
+    const forceTop = () => window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    forceTop();
+    requestAnimationFrame(forceTop);
+    const timer = window.setTimeout(forceTop, 100);
+    return () => window.clearTimeout(timer);
+  }, [accessReady, currentView]);
+
   if (!accessReady) return <div className="min-h-screen bg-[#F5F5F3]" />;
 
   if (currentView === 'super_admin' && access.isAdmin) {
