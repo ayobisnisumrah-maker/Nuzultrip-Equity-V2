@@ -12,6 +12,7 @@ export const isSupabaseConfigured = Boolean(
 
 export const supabase: SupabaseClient | null = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey, {
+      db: { schema: 'public' },
       realtime: {
         params: {
           eventsPerSecond: 10,
@@ -19,3 +20,6 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured
       },
     })
   : null;
+
+
+export const appSchema = supabase ? supabase.schema('app') : null;
