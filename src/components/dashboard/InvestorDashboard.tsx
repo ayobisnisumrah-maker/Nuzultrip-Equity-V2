@@ -1162,12 +1162,14 @@ export const InvestorDashboard: React.FC<InvestorDashboardProps> = ({
       {/* Liquidity & Shareholder Rights Modals */}
       <SaleRequestModal
         isOpen={showSaleModal}
+        investor={investor}
         onClose={() => setShowSaleModal(false)}
         onSuccess={(msg) => setAlertSuccess(msg)}
       />
 
       <InheritanceModal
         isOpen={showInheritanceModal}
+        investor={investor}
         onClose={() => setShowInheritanceModal(false)}
         onSuccess={(msg) => setAlertSuccess(msg)}
       />
