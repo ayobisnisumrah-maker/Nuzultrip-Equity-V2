@@ -685,7 +685,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
           </div>}
 
           {/* Section: DOKUMEN */}
-          <div className="space-y-1">
+          {adminAccess?.canViewDocuments && <div className="space-y-1">
             <div className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
               DOKUMEN
             </div>
@@ -737,10 +737,10 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
               <Lock size={15} className="text-slate-500" />
               <span>Data Room</span>
             </button>
-          </div>
+          </div>}
 
           {/* Section: PORTAL INVESTOR (Requested by User) */}
-          <div className="space-y-1">
+          {adminAccess?.canViewPortal && <div className="space-y-1">
             <div className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
               PORTAL INVESTOR
             </div>
@@ -797,7 +797,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
               <FileText size={15} className="text-slate-500" />
               <span>Dokumen Portal</span>
             </button>
-          </div>
+          </div>}
 
           {/* Section: PERUSAHAAN */}
           <div className="space-y-1">
@@ -823,7 +823,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
           </div>
 
           {/* Section: SISTEM */}
-          <div className="space-y-1">
+          {adminAccess?.isSuperAdmin && <div className="space-y-1">
             <div className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
               SISTEM
             </div>
@@ -880,10 +880,10 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                 DevOps
               </span>
             </button>
-          </div>
+          </div>}
 
           {/* Section: KEAMANAN */}
-          <div className="space-y-1">
+          {adminAccess?.canViewAudit && <div className="space-y-1">
             <div className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
               KEAMANAN
             </div>
@@ -908,7 +908,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                 {auditLogs.length}
               </span>
             </button>
-          </div>
+          </div>}
         </div>
 
         {/* Sidebar Footer with Quick Return */}
