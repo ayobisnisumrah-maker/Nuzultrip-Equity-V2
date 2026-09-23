@@ -230,7 +230,6 @@ export default function App() {
         onOpenInterest={() => handleOpenInterest(1)}
         isLoggedIn={isLoggedIn}
         onOpenDashboard={() => void openInvestor()}
-        onOpenSuperAdmin={() => void openAdmin()}
       />
 
       {/* Main Content Sections */}
