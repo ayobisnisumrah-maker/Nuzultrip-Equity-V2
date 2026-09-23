@@ -67,6 +67,7 @@ import { MessagesInquiriesView } from './MessagesInquiriesView';
 import { FinancialManagementView } from './FinancialManagementView';
 import { SystemIntegrationsView } from './SystemIntegrationsView';
 import { isSupabaseConfigured } from '../../lib/supabase';
+import { AdminAccess, loadAdminAccess } from '../../services/adminAccessService';
 
 interface SuperAdminDashboardProps {
   onBackToHome: () => void;
@@ -119,6 +120,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
   onLogout,
 }) => {
   const [activeNav, setActiveNav] = useState<NavSection>('dasbor');
+  const [adminAccess, setAdminAccess] = useState<AdminAccess | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [reports, setReports] = useState<InvestorReport[]>(realtimeStore.getReports());
   const [transactions, setTransactions] = useState<CashierTransaction[]>(
@@ -173,6 +175,20 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
   const [cmsAvailableUnits, setCmsAvailableUnits] = useState(portalSettings.availableUnits);
   const [cmsBanner, setCmsBanner] = useState(portalSettings.runningAnnouncement);
   const [messages, setMessages] = useState<InquiryMessage[]>(() => realtimeStore.getMessages());
+
+  useEffect(() => {
+    let mounted = true;
+    loadAdminAccess()
+      .then((access) => {
+        if (mounted) setAdminAccess(access);
+      })
+      .catch(() => {
+        if (mounted) setAdminAccess(null);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     const update = () => {
@@ -385,7 +401,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
           </div>
 
           {/* Section: HUBUNGAN INVESTOR */}
-          <div className="space-y-1">
+          {adminAccess?.canViewInvestors && <div className="space-y-1">
             <div className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
               HUBUNGAN INVESTOR
             </div>
@@ -487,10 +503,10 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                 {pendingRequestsCount}
               </span>
             </button>
-          </div>
+          </div>}
 
           {/* Section: KEPEMILIKAN */}
-          <div className="space-y-1">
+          {adminAccess?.canViewOwnership && <div className="space-y-1">
             <div className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
               KEPEMILIKAN
             </div>
@@ -558,10 +574,10 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
               <GitFork size={15} className="text-slate-500" />
               <span className="truncate">Pewarisan Kepemilik...</span>
             </button>
-          </div>
+          </div>}
 
           {/* Section: LAPORAN & KEUANGAN */}
-          <div className="space-y-1">
+          {adminAccess?.canViewFinance && <div className="space-y-1">
             <div className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
               LAPORAN & KEUANGAN
             </div>
@@ -666,7 +682,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
               <DollarSign size={15} className="text-slate-500" />
               <span>Distribusi Bagi Hasil</span>
             </button>
-          </div>
+          </div>}
 
           {/* Section: DOKUMEN */}
           <div className="space-y-1">
