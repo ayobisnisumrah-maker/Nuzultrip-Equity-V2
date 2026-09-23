@@ -68,6 +68,7 @@ import { FinancialManagementView } from './FinancialManagementView';
 import { SystemIntegrationsView } from './SystemIntegrationsView';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { AdminAccess, loadAdminAccess } from '../../services/adminAccessService';
+import { provisioningService } from '../../services/provisioningService';
 
 interface SuperAdminDashboardProps {
   onBackToHome: () => void;
@@ -141,6 +142,14 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
   // Modal Kasir State
   const [showKasirModal, setShowKasirModal] = useState(false);
   const [showAddReportModal, setShowAddReportModal] = useState(false);
+  const [showAddAdminModal, setShowAddAdminModal] = useState(false);
+  const [showAddInvestorModal, setShowAddInvestorModal] = useState(false);
+  const [newAdminName, setNewAdminName] = useState('');
+  const [newAdminEmail, setNewAdminEmail] = useState('');
+  const [newAdminRole, setNewAdminRole] = useState('admin_finance_reporting');
+  const [newInvestorName, setNewInvestorName] = useState('');
+  const [newInvestorEmail, setNewInvestorEmail] = useState('');
+  const [newInvestorWhatsapp, setNewInvestorWhatsapp] = useState('');
 
   // Kasir form inputs
   const [txType, setTxType] = useState<
@@ -257,6 +266,43 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
       currency: 'IDR',
       maximumFractionDigits: 0,
     }).format(val);
+  };
+
+  const handleCreateAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await provisioningService.createAdmin({
+        fullName: newAdminName,
+        email: newAdminEmail,
+        roleKey: newAdminRole,
+      });
+      setShowAddAdminModal(false);
+      setNewAdminName('');
+      setNewAdminEmail('');
+      await realtimeStore.refreshFromProduction();
+      triggerAlert('Admin baru berhasil dibuat dan disinkronkan.');
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Admin gagal dibuat.');
+    }
+  };
+
+  const handleCreateInvestor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await provisioningService.createInvestor({
+        legalName: newInvestorName,
+        email: newInvestorEmail,
+        whatsappNumber: newInvestorWhatsapp,
+      });
+      setShowAddInvestorModal(false);
+      setNewInvestorName('');
+      setNewInvestorEmail('');
+      setNewInvestorWhatsapp('');
+      await realtimeStore.refreshFromProduction();
+      triggerAlert('Investor baru berhasil didaftarkan untuk proses verifikasi.');
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Investor gagal didaftarkan.');
+    }
   };
 
   // Submit Kasir Transaction
@@ -1837,6 +1883,14 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
             <SystemIntegrationsView />
           )}
 
+          {activeNav === 'pengajuan_investor' && adminAccess?.canManageInvestors && (
+            <div className="mb-4 flex justify-end">
+              <button type="button" onClick={() => setShowAddInvestorModal(true)} className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold flex items-center gap-2">
+                <Plus size={14}/><span>Daftarkan Investor Baru</span>
+              </button>
+            </div>
+          )}
+
           {/* ADMINISTRATOR & ROLE PERMISSION */}
           {(activeNav === 'administrator' || activeNav === 'role_permission') && (
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-2xs space-y-6 animate-in fade-in">
@@ -1849,6 +1903,12 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                     Manajemen pengguna administrator, level akses RBAC, dan audit operasional perseroan.
                   </p>
                 </div>
+                {activeNav === 'administrator' && adminAccess?.isSuperAdmin && (
+                  <button type="button" onClick={() => setShowAddAdminModal(true)}
+                    className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer">
+                    <Plus size={13} /><span>Tambah Admin</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => setActiveNav('pengaturan')}
@@ -1904,6 +1964,36 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
           )}
         </main>
       </div>
+
+      {showAddAdminModal && adminAccess?.isSuperAdmin && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setShowAddAdminModal(false)}>
+          <form onSubmit={handleCreateAdmin} onClick={(e) => e.stopPropagation()} className="w-full max-w-md bg-white rounded-3xl p-6 space-y-4">
+            <h3 className="font-black text-lg">Tambah Administrator</h3>
+            <input required value={newAdminName} onChange={(e)=>setNewAdminName(e.target.value)} placeholder="Nama lengkap" className="w-full border rounded-xl px-3 py-2.5 text-sm" />
+            <input required type="email" value={newAdminEmail} onChange={(e)=>setNewAdminEmail(e.target.value)} placeholder="Email" className="w-full border rounded-xl px-3 py-2.5 text-sm" />
+            <select value={newAdminRole} onChange={(e)=>setNewAdminRole(e.target.value)} className="w-full border rounded-xl px-3 py-2.5 text-sm">
+              <option value="admin_finance_reporting">Admin Keuangan & Laporan</option>
+              <option value="admin_document_verification">Admin Dokumen & Verifikasi</option>
+              <option value="admin_investor_relations">Admin Investor Relations</option>
+              <option value="admin_portal_communications">Admin Portal & Komunikasi</option>
+              <option value="admin_internal">Admin Internal</option>
+            </select>
+            <div className="flex justify-end gap-2"><button type="button" onClick={()=>setShowAddAdminModal(false)} className="px-4 py-2 rounded-xl bg-slate-100">Batal</button><button type="submit" className="px-4 py-2 rounded-xl bg-emerald-600 text-white font-bold">Buat Admin</button></div>
+          </form>
+        </div>
+      )}
+
+      {showAddInvestorModal && adminAccess?.canManageInvestors && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setShowAddInvestorModal(false)}>
+          <form onSubmit={handleCreateInvestor} onClick={(e) => e.stopPropagation()} className="w-full max-w-md bg-white rounded-3xl p-6 space-y-4">
+            <h3 className="font-black text-lg">Daftarkan Investor Baru</h3>
+            <input required value={newInvestorName} onChange={(e)=>setNewInvestorName(e.target.value)} placeholder="Nama legal investor" className="w-full border rounded-xl px-3 py-2.5 text-sm" />
+            <input required type="email" value={newInvestorEmail} onChange={(e)=>setNewInvestorEmail(e.target.value)} placeholder="Email" className="w-full border rounded-xl px-3 py-2.5 text-sm" />
+            <input value={newInvestorWhatsapp} onChange={(e)=>setNewInvestorWhatsapp(e.target.value)} placeholder="WhatsApp" className="w-full border rounded-xl px-3 py-2.5 text-sm" />
+            <div className="flex justify-end gap-2"><button type="button" onClick={()=>setShowAddInvestorModal(false)} className="px-4 py-2 rounded-xl bg-slate-100">Batal</button><button type="submit" className="px-4 py-2 rounded-xl bg-emerald-600 text-white font-bold">Daftarkan</button></div>
+          </form>
+        </div>
+      )}
 
       {/* MODAL KASIR (Point of Sale) */}
       {showKasirModal && (
