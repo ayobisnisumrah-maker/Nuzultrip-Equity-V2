@@ -21,10 +21,14 @@ import { DetailInfoModal } from './components/modals/DetailInfoModal';
 import { InvestorDashboard } from './components/dashboard/InvestorDashboard';
 import { SuperAdminDashboard } from './components/admin/SuperAdminDashboard';
 import { ServiceItem, InvestorInfoItem, ArticleItem } from './data/landingData';
+import { resolveSessionAccess, secureLogout, type SessionAccess } from './services/sessionAccessService';
+import { supabase } from './lib/supabase';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<'landing' | 'dashboard' | 'super_admin'>('landing');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [access, setAccess] = useState<SessionAccess>({authenticated:false,isAdmin:false,isInvestor:false,investorStatus:null});
+  const [accessReady, setAccessReady] = useState(false);
   const [isInterestModalOpen, setIsInterestModalOpen] = useState(false);
   const [selectedUnits, setSelectedUnits] = useState<number>(1);
   const [isPitchdeckModalOpen, setIsPitchdeckModalOpen] = useState(false);
@@ -47,6 +51,18 @@ export default function App() {
     content: '',
     detailsList: [],
   });
+
+  useEffect(() => {
+    let active=true;
+    const sync=async()=>{const next=await resolveSessionAccess();if(!active)return;setAccess(next);setIsLoggedIn(next.authenticated);setAccessReady(true);setCurrentView((view)=>view==='super_admin'&&!next.isAdmin?'landing':view==='dashboard'&&!next.isInvestor?'landing':view)};
+    void sync();
+    const sub=supabase?.auth.onAuthStateChange(()=>{void sync()}).data.subscription;
+    return()=>{active=false;sub?.unsubscribe()};
+  }, []);
+
+  const openAdmin=async()=>{const next=await resolveSessionAccess();setAccess(next);if(next.isAdmin)setCurrentView('super_admin');else setIsLoginModalOpen(true)};
+  const openInvestor=async()=>{const next=await resolveSessionAccess();setAccess(next);if(next.isInvestor)setCurrentView('dashboard');else setIsLoginModalOpen(true)};
+  const logout=async()=>{await secureLogout();setAccess({authenticated:false,isAdmin:false,isInvestor:false,investorStatus:null});setIsLoggedIn(false);setCurrentView('landing')};
 
   // Handle global Escape key to close modals
   useEffect(() => {
@@ -185,25 +201,24 @@ export default function App() {
     });
   };
 
-  if (currentView === 'super_admin') {
+  if (!accessReady) return <div className="min-h-screen bg-[#F5F5F3]" />;
+
+  if (currentView === 'super_admin' && access.isAdmin) {
     return (
       <SuperAdminDashboard
         onBackToHome={() => setCurrentView('landing')}
-        onOpenInvestorPortal={() => setCurrentView('dashboard')}
-        onLogout={() => setCurrentView('landing')}
+        onOpenInvestorPortal={() => void openInvestor()}
+        onLogout={() => void logout()}
       />
     );
   }
 
-  if (currentView === 'dashboard') {
+  if (currentView === 'dashboard' && access.isInvestor) {
     return (
       <InvestorDashboard
         onBackToHome={() => setCurrentView('landing')}
-        onOpenSuperAdmin={() => setCurrentView('super_admin')}
-        onLogout={() => {
-          setIsLoggedIn(false);
-          setCurrentView('landing');
-        }}
+        onOpenSuperAdmin={() => void openAdmin()}
+        onLogout={() => void logout()}
       />
     );
   }
@@ -215,8 +230,8 @@ export default function App() {
         onOpenLogin={() => setIsLoginModalOpen(true)}
         onOpenInterest={() => handleOpenInterest(1)}
         isLoggedIn={isLoggedIn}
-        onOpenDashboard={() => setCurrentView('dashboard')}
-        onOpenSuperAdmin={() => setCurrentView('super_admin')}
+        onOpenDashboard={() => void openInvestor()}
+        onOpenSuperAdmin={() => void openAdmin()}
       />
 
       {/* Main Content Sections */}
@@ -272,7 +287,7 @@ export default function App() {
         onOpenInterest={() => handleOpenInterest(1)}
         onOpenPitchdeck={() => setIsPitchdeckModalOpen(true)}
         onOpenDetail={handleOpenFooterDetail}
-        onOpenSuperAdmin={() => setCurrentView('super_admin')}
+        onOpenSuperAdmin={() => void openAdmin()}
       />
 
       {/* Interactive Modals */}
@@ -292,11 +307,10 @@ export default function App() {
         onClose={() => setIsLoginModalOpen(false)}
         onOpenInterest={() => setIsInterestModalOpen(true)}
         onSuccessLogin={() => {
-          setIsLoggedIn(true);
-          setCurrentView('dashboard');
+          void openInvestor();
         }}
         onSuccessAdminLogin={() => {
-          setCurrentView('super_admin');
+          void openAdmin();
         }}
       />
 
