@@ -66,6 +66,9 @@ export const FinancialManagementView: React.FC<FinancialManagementViewProps> = (
   const [kpis, setKpis] = useState<Kpi[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [draftItems, setDraftItems] = useState<Array<{statement:string;category:string;line_key:string;label:string;amount:string;note:string}>>([]);
 
   const load = async () => {
     if (!supabase) {
@@ -117,6 +120,55 @@ export const FinancialManagementView: React.FC<FinancialManagementViewProps> = (
     () => kpis.filter((item) => item.financial_report_version_id === currentVersionId),
     [kpis, currentVersionId],
   );
+
+  useEffect(() => {
+    if (!currentReport || currentReport.status !== 'draft') {
+      setDraftItems([]);
+      return;
+    }
+    setDraftItems(currentItems.map((item) => ({
+      statement: item.statement,
+      category: item.category,
+      line_key: item.line_key,
+      label: item.label,
+      amount: String(item.amount),
+      note: item.note || '',
+    })));
+  }, [currentReport?.id, currentReport?.status, currentVersionId, lineItems]);
+
+  const addDraftItem = () => setDraftItems((prev) => [...prev, {
+    statement: 'balance', category: 'asset', line_key: '', label: '', amount: '', note: '',
+  }]);
+
+  const saveDraftItems = async () => {
+    if (!supabase || !currentReport || currentReport.status !== 'draft') return;
+    if (draftItems.some((item) => !item.line_key.trim() || !item.label.trim() || item.amount.trim() === '' || !Number.isFinite(Number(item.amount)))) {
+      setMessage('Lengkapi kode akun, nama akun, dan nominal yang valid pada seluruh baris.');
+      return;
+    }
+    setSaving(true); setMessage(null);
+    const payload = draftItems.map((item, position) => ({
+      statement: item.statement,
+      category: item.category,
+      line_key: item.line_key.trim(),
+      label: item.label.trim(),
+      amount: Number(item.amount),
+      currency: 'IDR',
+      position,
+      note: item.note.trim() || null,
+    }));
+    const { error: saveError } = await supabase.schema('app').rpc('save_financial_report_draft_content', {
+      p_report_id: currentReport.id,
+      p_document_asset_id: null,
+      p_line_items: payload,
+      p_kpis: currentKpis.map((kpi) => ({
+        kpi_key: kpi.kpi_key, label: kpi.label, value: kpi.value, unit: kpi.unit, basis: kpi.basis, position: kpi.position,
+      })),
+    });
+    if (saveError) setMessage(saveError.message);
+    else { setMessage('Line item laporan berhasil disimpan ke draft production.'); await load(); }
+    setSaving(false);
+  };
 
   const statementGroups = useMemo(() => {
     const groups = new Map<string, LineItem[]>();
@@ -175,6 +227,39 @@ export const FinancialManagementView: React.FC<FinancialManagementViewProps> = (
                   <span className="self-start px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-[10px] font-black uppercase">{currentReport.status}</span>
                 </div>
               </div>
+              {currentReport.status === 'draft' && (
+                <div className="bg-white p-6 rounded-3xl border border-slate-200 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <h4 className="text-sm font-black text-slate-900">Editor Line Item Laporan</h4>
+                      <p className="text-xs text-slate-500 mt-1">Input hanya angka pembukuan yang dapat ditelusuri. Data disimpan ke financial_line_items production.</p>
+                    </div>
+                    <button type="button" onClick={addDraftItem} className="px-3 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold">+ Tambah Akun</button>
+                  </div>
+                  {message && <div className="p-3 rounded-xl bg-slate-50 border text-xs font-semibold text-slate-700">{message}</div>}
+                  {draftItems.length === 0 ? <div className="text-xs text-slate-500">Belum ada akun. Tambahkan akun sesuai buku besar/periode laporan.</div> : (
+                    <div className="space-y-2">
+                      {draftItems.map((item, index) => (
+                        <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-2 p-3 rounded-2xl bg-slate-50 border border-slate-200">
+                          <select value={item.statement} onChange={(e) => setDraftItems((p) => p.map((x,i)=>i===index?{...x,statement:e.target.value,category:e.target.value==='income'?'revenue':e.target.value==='cash_flow'?'operating':'asset'}:x))} className="md:col-span-2 border rounded-lg px-2 py-2 text-xs bg-white"><option value="balance">Posisi Keuangan</option><option value="income">Laba Rugi</option><option value="cash_flow">Arus Kas</option></select>
+                          <select value={item.category} onChange={(e) => setDraftItems((p)=>p.map((x,i)=>i===index?{...x,category:e.target.value}:x))} className="md:col-span-2 border rounded-lg px-2 py-2 text-xs bg-white">
+                            {(item.statement==='balance'?['asset','liability','equity']:item.statement==='income'?['revenue','expense']:['operating','investing','financing']).map(v=><option key={v} value={v}>{v}</option>)}
+                          </select>
+                          <input value={item.line_key} onChange={(e)=>setDraftItems((p)=>p.map((x,i)=>i===index?{...x,line_key:e.target.value}:x))} placeholder="Kode akun" className="md:col-span-2 border rounded-lg px-2 py-2 text-xs"/>
+                          <input value={item.label} onChange={(e)=>setDraftItems((p)=>p.map((x,i)=>i===index?{...x,label:e.target.value}:x))} placeholder="Nama akun" className="md:col-span-3 border rounded-lg px-2 py-2 text-xs"/>
+                          <input type="number" value={item.amount} onChange={(e)=>setDraftItems((p)=>p.map((x,i)=>i===index?{...x,amount:e.target.value}:x))} placeholder="Nominal IDR" className="md:col-span-2 border rounded-lg px-2 py-2 text-xs"/>
+                          <button type="button" onClick={()=>setDraftItems((p)=>p.filter((_,i)=>i!==index))} className="md:col-span-1 text-rose-600 font-bold text-xs">Hapus</button>
+                          <input value={item.note} onChange={(e)=>setDraftItems((p)=>p.map((x,i)=>i===index?{...x,note:e.target.value}:x))} placeholder="Catatan akun / referensi CALK (opsional)" className="md:col-span-12 border rounded-lg px-2 py-2 text-xs"/>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex justify-end">
+                    <button type="button" disabled={saving} onClick={()=>void saveDraftItems()} className="px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold disabled:opacity-50">{saving?'Menyimpan...':'Simpan Line Item Production'}</button>
+                  </div>
+                </div>
+              )}
+
               {currentItems.length === 0 ? (
                 <Empty title="Belum ada line item laporan" text="Laporan sudah tercatat, tetapi angka Posisi Keuangan, Laba Rugi, Perubahan Ekuitas, dan Arus Kas belum diinput ke financial_line_items. Sistem tidak membuat angka pengganti." />
               ) : (
