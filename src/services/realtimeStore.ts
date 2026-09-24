@@ -775,59 +775,14 @@ class RealtimeStore {
     return [...this.dividends];
   }
 
-  public async distributeDividend(payout: {
+  public async distributeDividend(_payout: {
     period: string;
     amountPerUnit: number;
     paymentMethod?: string;
   }): Promise<DividendRecord> {
-    const now = new Date();
-    const refCode = `BSI-TRX-${now.toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(
-      1000 + Math.random() * 9000
-    )}`;
-
-    const newDiv: DividendRecord = {
-      id: `DIV-${Date.now()}`,
-      period: payout.period,
-      paymentDate: now.toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      }),
-      amountPerUnit: payout.amountPerUnit,
-      units: 2, // Default investor units
-      totalGross: payout.amountPerUnit * 2,
-      taxDeduction: 0,
-      totalNet: payout.amountPerUnit * 2,
-      status: 'Berhasil',
-      referenceNumber: refCode,
-      paymentMethod: payout.paymentMethod || 'Bank Transfer (BSI Syariah)',
-    };
-
-    this.dividends = [newDiv, ...this.dividends];
-
-    // Automatically create a corresponding financial report for transparency
-    const newReport: InvestorReport = {
-      id: `REP-DIV-${Date.now().toString(36).toUpperCase()}`,
-      title: `Laporan Realisasi Bagi Hasil Periode ${payout.period}`,
-      period: payout.period,
-      date: now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
-      category: 'bagi_hasil',
-      summary: `Eksekusi penyaluran bagi hasil periode ${payout.period} telah berhasil ditransfer ke rekening BSI pemegang unit dengan yield Rp ${payout.amountPerUnit.toLocaleString('id-ID')} / unit.`,
-      contentDetails: `Seluruh transaksi pembayaran dividen telah divalidasi oleh Divisi Keuangan PT Nuzul Berkah Wisata dengan nomor kliring ${refCode}.`,
-      fileSize: '1.8 MB',
-      fileType: 'PDF',
-      isNew: true,
-      highlights: [
-        { label: 'Bagi Hasil Per Unit', value: `Rp ${(payout.amountPerUnit / 1000000).toFixed(1)} Juta` },
-        { label: 'Status Transfer', value: '100% Berhasil' },
-      ],
-    };
-
-    this.reports = [newReport, ...this.reports];
-    this.saveToStorage();
-    this.notify();
-
-    return newDiv;
+    throw new Error(
+      'Eksekusi bagi hasil manual dinonaktifkan. Distribusi hanya boleh diproses dari profit_distributions production melalui workflow keuangan, alokasi investor, bukti pembayaran, dan audit trail.'
+    );
   }
 
   // --- PORTAL SETTINGS (CMS) API ---
