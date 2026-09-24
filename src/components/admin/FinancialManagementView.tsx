@@ -28,6 +28,13 @@ type ReportRow = {
   updated_at: string;
 };
 
+type ReportVersion = {
+  id: string;
+  financial_report_id: string;
+  status: string;
+  structured_content: Record<string, string> | null;
+};
+
 type LineItem = {
   id: string;
   financial_report_version_id: string;
@@ -62,6 +69,7 @@ export const FinancialManagementView: React.FC<FinancialManagementViewProps> = (
   const [activeTab, setActiveTab] = useState<'ringkasan' | 'periode' | 'kpi'>(initialSubTab);
   const [periods, setPeriods] = useState<PeriodRow[]>([]);
   const [reports, setReports] = useState<ReportRow[]>([]);
+  const [versions, setVersions] = useState<ReportVersion[]>([]);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [kpis, setKpis] = useState<Kpi[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,18 +87,20 @@ export const FinancialManagementView: React.FC<FinancialManagementViewProps> = (
     }
     setLoading(true);
     setError(null);
-    const [periodResult, reportResult, itemResult, kpiResult] = await Promise.all([
+    const [periodResult, reportResult, versionResult, itemResult, kpiResult] = await Promise.all([
       supabase.from('financial_periods').select('id,period_type,fiscal_year,period_index,starts_on,ends_on,status').order('starts_on', { ascending: false }),
       supabase.from('financial_reports').select('id,financial_period_id,title,summary,status,visibility,current_version_id,published_version_id,updated_at').order('updated_at', { ascending: false }),
+      supabase.from('financial_report_versions').select('id,financial_report_id,status,structured_content'),
       supabase.from('financial_line_items').select('id,financial_report_version_id,statement,category,line_key,label,amount,currency,position,note').order('position'),
       supabase.from('financial_kpis').select('id,financial_report_version_id,kpi_key,label,value,unit,basis,position').order('position'),
     ]);
-    const firstError = periodResult.error || reportResult.error || itemResult.error || kpiResult.error;
+    const firstError = periodResult.error || reportResult.error || versionResult.error || itemResult.error || kpiResult.error;
     if (firstError) {
       setError(firstError.message);
     } else {
       setPeriods((periodResult.data || []) as PeriodRow[]);
       setReports((reportResult.data || []) as ReportRow[]);
+      setVersions((versionResult.data || []) as ReportVersion[]);
       setLineItems((itemResult.data || []).map((x: any) => ({ ...x, amount: Number(x.amount || 0) })) as LineItem[]);
       setKpis((kpiResult.data || []).map((x: any) => ({ ...x, value: Number(x.value || 0) })) as Kpi[]);
     }
@@ -121,6 +131,28 @@ export const FinancialManagementView: React.FC<FinancialManagementViewProps> = (
     () => kpis.filter((item) => item.financial_report_version_id === currentVersionId),
     [kpis, currentVersionId],
   );
+
+  const currentVersion = useMemo(
+    () => versions.find((version) => version.id === currentVersionId) || null,
+    [versions, currentVersionId],
+  );
+
+  const tocSections = useMemo(() => {
+    const content = currentVersion?.structured_content || {};
+    return [
+      ['executive_summary', 'Ringkasan Eksekutif'],
+      ['company_information', 'Profil & Informasi Perusahaan'],
+      ['performance_overview', 'Ikhtisar Kinerja Periode'],
+      ['financial_position', 'Laporan Posisi Keuangan'],
+      ['profit_loss_comprehensive', 'Laporan Laba Rugi & Penghasilan Komprehensif'],
+      ['changes_in_equity', 'Laporan Perubahan Ekuitas'],
+      ['cash_flows', 'Laporan Arus Kas'],
+      ['notes_to_financial_statements', 'Catatan atas Laporan Keuangan (CALK)'],
+      ['material_events', 'Risiko & Peristiwa Material'],
+      ['management_follow_up', 'Rencana / Tindak Lanjut Manajemen'],
+      ['approval', 'Pengesahan Laporan'],
+    ].map(([key, label]) => ({ key, label, complete: Boolean(String(content[key] || '').trim()) }));
+  }, [currentVersion]);
 
   const balanceCheck = useMemo(() => {
     const balanceItems = currentItems.filter((item) => item.statement === 'balance');
@@ -265,6 +297,26 @@ export const FinancialManagementView: React.FC<FinancialManagementViewProps> = (
                   <span className="self-start px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-[10px] font-black uppercase">{currentReport.status}</span>
                 </div>
               </div>
+              <div className="bg-white p-5 rounded-3xl border border-slate-200">
+                <div className="flex items-start justify-between gap-3 mb-4">
+                  <div>
+                    <div className="text-xs font-black text-slate-900">Daftar Isi & Kelengkapan Laporan</div>
+                    <p className="text-xs text-slate-500 mt-1">Urutan ini menjadi struktur dokumen resmi. Bagian kosong ditandai sebelum laporan dilanjutkan.</p>
+                  </div>
+                  <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black ${tocSections.every((x)=>x.complete)?'bg-emerald-50 text-emerald-700':'bg-amber-50 text-amber-700'}`}>
+                    {tocSections.filter((x)=>x.complete).length}/{tocSections.length} lengkap
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {tocSections.map((section,index)=>(
+                    <div key={section.key} className="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs">
+                      <span className="font-semibold text-slate-700">{index+1}. {section.label}</span>
+                      <span className={section.complete?'text-emerald-700 font-bold':'text-amber-700 font-bold'}>{section.complete?'Lengkap':'Belum Lengkap'}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="bg-white p-5 rounded-3xl border border-slate-200">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
