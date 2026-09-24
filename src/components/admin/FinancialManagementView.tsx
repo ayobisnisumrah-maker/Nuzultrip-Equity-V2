@@ -68,6 +68,7 @@ export const FinancialManagementView: React.FC<FinancialManagementViewProps> = (
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [transitioning, setTransitioning] = useState(false);
   const [draftItems, setDraftItems] = useState<Array<{statement:string;category:string;line_key:string;label:string;amount:string;note:string}>>([]);
 
   const load = async () => {
@@ -191,6 +192,22 @@ export const FinancialManagementView: React.FC<FinancialManagementViewProps> = (
     setSaving(false);
   };
 
+  const transitionReport = async (target: 'review' | 'approved' | 'published') => {
+    if (!supabase || !currentReport) return;
+    if (target === 'review' && (!balanceCheck.balanced || !currentItems.some((x) => x.statement === 'income') || !currentItems.some((x) => x.statement === 'cash_flow'))) {
+      setMessage('Laporan belum siap direview: neraca harus seimbang serta Laba Rugi dan Arus Kas harus memiliki line item.');
+      return;
+    }
+    setTransitioning(true); setMessage(null);
+    const { error: transitionError } = await supabase.schema('app').rpc('transition_financial_report', {
+      p_report_id: currentReport.id,
+      p_target: target,
+    });
+    if (transitionError) setMessage(transitionError.message);
+    else { setMessage(`Status laporan berhasil diubah menjadi ${target}.`); await load(); }
+    setTransitioning(false);
+  };
+
   const statementGroups = useMemo(() => {
     const groups = new Map<string, LineItem[]>();
     currentItems.forEach((item) => groups.set(item.statement, [...(groups.get(item.statement) || []), item]));
@@ -248,6 +265,21 @@ export const FinancialManagementView: React.FC<FinancialManagementViewProps> = (
                   <span className="self-start px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-[10px] font-black uppercase">{currentReport.status}</span>
                 </div>
               </div>
+              <div className="bg-white p-5 rounded-3xl border border-slate-200">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <div className="text-xs font-black text-slate-900">Workflow Laporan Resmi</div>
+                    <p className="text-xs text-slate-500 mt-1">Draft → Review → Approved → Published. Transisi tetap diverifikasi oleh permission dan RPC production.</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {currentReport.status === 'draft' && <button type="button" disabled={transitioning} onClick={()=>void transitionReport('review')} className="px-3 py-2 rounded-xl bg-amber-500 text-white text-xs font-bold disabled:opacity-50">Kirim ke Review</button>}
+                    {currentReport.status === 'review' && <button type="button" disabled={transitioning} onClick={()=>void transitionReport('approved')} className="px-3 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold disabled:opacity-50">Setujui Laporan</button>}
+                    {currentReport.status === 'approved' && <button type="button" disabled={transitioning} onClick={()=>void transitionReport('published')} className="px-3 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold disabled:opacity-50">Publish ke Investor</button>}
+                    {currentReport.status === 'published' && <span className="px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold">✓ Published</span>}
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div className={`p-5 rounded-3xl border ${balanceCheck.balanced ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'}`}>
                   <div className="text-xs font-black text-slate-900">Validasi Persamaan Akuntansi</div>
