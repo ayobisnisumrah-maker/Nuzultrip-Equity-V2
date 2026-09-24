@@ -121,6 +121,27 @@ export const FinancialManagementView: React.FC<FinancialManagementViewProps> = (
     [kpis, currentVersionId],
   );
 
+  const balanceCheck = useMemo(() => {
+    const balanceItems = currentItems.filter((item) => item.statement === 'balance');
+    const assets = balanceItems.filter((item) => item.category === 'asset').reduce((sum, item) => sum + item.amount, 0);
+    const liabilities = balanceItems.filter((item) => item.category === 'liability').reduce((sum, item) => sum + item.amount, 0);
+    const equity = balanceItems.filter((item) => item.category === 'equity').reduce((sum, item) => sum + item.amount, 0);
+    const difference = assets - liabilities - equity;
+    return { assets, liabilities, equity, difference, hasData: balanceItems.length > 0, balanced: balanceItems.length > 0 && Math.abs(difference) < 1 };
+  }, [currentItems]);
+
+  const previousReport = useMemo(() => {
+    if (!currentReport) return null;
+    const currentPeriod = periods.find((period) => period.id === currentReport.financial_period_id);
+    if (!currentPeriod) return null;
+    const previousPeriod = periods
+      .filter((period) => new Date(period.ends_on).getTime() < new Date(currentPeriod.starts_on).getTime())
+      .sort((left, right) => new Date(right.ends_on).getTime() - new Date(left.ends_on).getTime())[0];
+    return previousPeriod
+      ? reports.find((report) => report.financial_period_id === previousPeriod.id && report.status === 'published') || null
+      : null;
+  }, [currentReport, periods, reports]);
+
   useEffect(() => {
     if (!currentReport || currentReport.status !== 'draft') {
       setDraftItems([]);
@@ -227,6 +248,34 @@ export const FinancialManagementView: React.FC<FinancialManagementViewProps> = (
                   <span className="self-start px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-[10px] font-black uppercase">{currentReport.status}</span>
                 </div>
               </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className={`p-5 rounded-3xl border ${balanceCheck.balanced ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'}`}>
+                  <div className="text-xs font-black text-slate-900">Validasi Persamaan Akuntansi</div>
+                  {!balanceCheck.hasData ? (
+                    <p className="text-xs text-slate-600 mt-2">Belum ada line item Posisi Keuangan.</p>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-3 gap-2 mt-3 text-[10px]">
+                        <div><div className="text-slate-500">Aset</div><div className="font-bold">{formatRupiah(balanceCheck.assets)}</div></div>
+                        <div><div className="text-slate-500">Liabilitas</div><div className="font-bold">{formatRupiah(balanceCheck.liabilities)}</div></div>
+                        <div><div className="text-slate-500">Ekuitas</div><div className="font-bold">{formatRupiah(balanceCheck.equity)}</div></div>
+                      </div>
+                      <div className="mt-3 text-xs font-bold">
+                        {balanceCheck.balanced ? '✓ Seimbang: Aset = Liabilitas + Ekuitas' : `Belum seimbang. Selisih: ${formatRupiah(balanceCheck.difference)}`}
+                      </div>
+                    </>
+                  )}
+                </div>
+                <div className="p-5 rounded-3xl border border-slate-200 bg-white">
+                  <div className="text-xs font-black text-slate-900">Informasi Komparatif</div>
+                  <p className="text-xs text-slate-500 mt-2">
+                    {previousReport
+                      ? `Pembanding published terdekat: ${previousReport.title}. Angka komparatif hanya boleh berasal dari versi published periode tersebut.`
+                      : 'Belum ada laporan periode sebelumnya berstatus published yang dapat dijadikan pembanding.'}
+                  </p>
+                </div>
+              </div>
+
               {currentReport.status === 'draft' && (
                 <div className="bg-white p-6 rounded-3xl border border-slate-200 space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
