@@ -164,10 +164,15 @@ export const Footer: React.FC<FooterProps> = ({
                 href={`https://wa.me/${settings.contactPhone.replace(/[^0-9]/g, '')}?text=Halo%20Tim%20Investor%20Relations,%20saya%20membutuhkan%20informasi%20terbaru%20mengenai%20penawaran%20equity.`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full py-2.5 px-4 rounded-xl bg-white text-[#090909] font-bold text-[13.5px] flex items-center justify-center gap-2 hover:bg-[#EDEDEB] transition-all group cursor-pointer"
+                className="w-full min-h-[56px] py-3 px-4 rounded-xl bg-white text-[#090909] font-bold text-[13.5px] flex items-center justify-between gap-3 hover:bg-[#EDEDEB] transition-all group cursor-pointer"
               >
-                <span>Hubungi Kami ({settings.contactPhone})</span>
-                <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                <span className="min-w-0 text-left leading-[1.35]">
+                  <span className="block sm:inline">Hubungi Kami</span>
+                  <span className="block sm:inline sm:ml-1 break-words">({settings.contactPhone})</span>
+                </span>
+                <span className="w-8 h-8 shrink-0 rounded-full bg-[#F4F1E8] flex items-center justify-center text-[#8B6B08]">
+                  <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+                </span>
               </a>
             </div>
           </div>
