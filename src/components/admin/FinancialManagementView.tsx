@@ -38,6 +38,7 @@ type LineItem = {
   amount: number;
   currency: string;
   position: number;
+  note?: string | null;
 };
 
 type Kpi = {
@@ -77,7 +78,7 @@ export const FinancialManagementView: React.FC<FinancialManagementViewProps> = (
     const [periodResult, reportResult, itemResult, kpiResult] = await Promise.all([
       supabase.from('financial_periods').select('id,period_type,fiscal_year,period_index,starts_on,ends_on,status').order('starts_on', { ascending: false }),
       supabase.from('financial_reports').select('id,financial_period_id,title,summary,status,visibility,current_version_id,published_version_id,updated_at').order('updated_at', { ascending: false }),
-      supabase.from('financial_line_items').select('id,financial_report_version_id,statement,category,line_key,label,amount,currency,position').order('position'),
+      supabase.from('financial_line_items').select('id,financial_report_version_id,statement,category,line_key,label,amount,currency,position,note').order('position'),
       supabase.from('financial_kpis').select('id,financial_report_version_id,kpi_key,label,value,unit,basis,position').order('position'),
     ]);
     const firstError = periodResult.error || reportResult.error || itemResult.error || kpiResult.error;
