@@ -78,6 +78,7 @@ export const FinancialManagementView: React.FC<FinancialManagementViewProps> = (
   const [saving, setSaving] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
   const [draftItems, setDraftItems] = useState<Array<{statement:string;category:string;line_key:string;label:string;amount:string;note:string}>>([]);
+  const [calkDraft, setCalkDraft] = useState('');
 
   const load = async () => {
     if (!supabase) {
@@ -176,6 +177,10 @@ export const FinancialManagementView: React.FC<FinancialManagementViewProps> = (
   }, [currentReport, periods, reports]);
 
   useEffect(() => {
+    setCalkDraft(String(currentVersion?.structured_content?.notes_to_financial_statements || ''));
+  }, [currentVersion?.id, currentVersion?.structured_content]);
+
+  useEffect(() => {
     if (!currentReport || currentReport.status !== 'draft') {
       setDraftItems([]);
       return;
@@ -224,10 +229,24 @@ export const FinancialManagementView: React.FC<FinancialManagementViewProps> = (
     setSaving(false);
   };
 
+  const saveCalk = async () => {
+    if (!supabase || !currentReport || !currentVersion || currentReport.status !== 'draft') return;
+    setSaving(true); setMessage(null);
+    const nextContent = { ...(currentVersion.structured_content || {}), notes_to_financial_statements: calkDraft.trim() };
+    const { error: saveError } = await supabase
+      .from('financial_report_versions')
+      .update({ structured_content: nextContent })
+      .eq('id', currentVersion.id)
+      .eq('status', 'draft');
+    if (saveError) setMessage(saveError.message);
+    else { setMessage('CALK tersimpan pada draft laporan production.'); await load(); }
+    setSaving(false);
+  };
+
   const transitionReport = async (target: 'review' | 'approved' | 'published') => {
     if (!supabase || !currentReport) return;
-    if (target === 'review' && (!balanceCheck.balanced || !currentItems.some((x) => x.statement === 'income') || !currentItems.some((x) => x.statement === 'cash_flow'))) {
-      setMessage('Laporan belum siap direview: neraca harus seimbang serta Laba Rugi dan Arus Kas harus memiliki line item.');
+    if (target === 'review' && (!tocSections.every((x) => x.complete) || !balanceCheck.balanced || !currentItems.some((x) => x.statement === 'income') || !currentItems.some((x) => x.statement === 'cash_flow'))) {
+      setMessage('Laporan belum siap direview: seluruh daftar isi wajib lengkap, neraca harus seimbang, serta Laba Rugi dan Arus Kas harus memiliki line item.');
       return;
     }
     setTransitioning(true); setMessage(null);
@@ -316,6 +335,19 @@ export const FinancialManagementView: React.FC<FinancialManagementViewProps> = (
                   ))}
                 </div>
               </div>
+
+              {currentReport.status === 'draft' && (
+                <div className="bg-white p-5 rounded-3xl border border-slate-200">
+                  <div className="mb-3">
+                    <div className="text-xs font-black text-slate-900">Catatan atas Laporan Keuangan (CALK)</div>
+                    <p className="text-xs text-slate-500 mt-1">Isi kebijakan akuntansi, rincian akun material, estimasi/pertimbangan, komitmen, kontinjensi, transaksi pihak berelasi, dan informasi lain yang memang berlaku. Jangan mengisi fakta yang tidak didukung dokumen pembukuan.</p>
+                  </div>
+                  <textarea value={calkDraft} onChange={(e)=>setCalkDraft(e.target.value)} rows={8} placeholder="Masukkan CALK berdasarkan data dan dokumen perusahaan..." className="w-full border border-slate-200 rounded-2xl px-4 py-3 text-xs leading-relaxed focus:outline-none focus:ring-2 focus:ring-slate-200"/>
+                  <div className="mt-3 flex justify-end">
+                    <button type="button" disabled={saving} onClick={()=>void saveCalk()} className="px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold disabled:opacity-50">{saving?'Menyimpan...':'Simpan CALK Production'}</button>
+                  </div>
+                </div>
+              )}
 
               <div className="bg-white p-5 rounded-3xl border border-slate-200">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
