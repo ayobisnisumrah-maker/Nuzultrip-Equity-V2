@@ -2221,10 +2221,44 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                   rows={3}
                   required
                   value={repSummary}
-                  onChange={(e) => setRepSummary(e.target.value)}
-                  placeholder="Ulasan kinerja laba, jamaah, dividen..."
+                  onChange={(e) => {
+                    setRepSummary(e.target.value);
+                    setReportSections((prev) => ({ ...prev, executive_summary: e.target.value }));
+                  }}
+                  placeholder="Ringkas kondisi dan kinerja periode berdasarkan data production. Hindari klaim yang belum diverifikasi."
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none"
                 />
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+                <div>
+                  <div className="font-extrabold text-slate-900">Daftar Isi Wajib Laporan</div>
+                  <p className="text-[11px] text-slate-500 mt-0.5">Semua bagian wajib diisi. Daftar isi PDF akan dibentuk otomatis mengikuti urutan ini.</p>
+                </div>
+                {[
+                  ['company_information','1. Profil & Informasi Perusahaan'],
+                  ['performance_overview','2. Ikhtisar Kinerja Periode'],
+                  ['financial_position','3. Laporan Posisi Keuangan'],
+                  ['profit_loss_comprehensive','4. Laporan Laba Rugi & Penghasilan Komprehensif'],
+                  ['changes_in_equity','5. Laporan Perubahan Ekuitas'],
+                  ['cash_flows','6. Laporan Arus Kas'],
+                  ['notes_to_financial_statements','7. Catatan atas Laporan Keuangan (CALK)'],
+                  ['material_events','8. Risiko & Peristiwa Material'],
+                  ['management_follow_up','9. Rencana / Tindak Lanjut Manajemen'],
+                  ['approval','10. Pengesahan Laporan'],
+                ].map(([key,label]) => (
+                  <div key={key}>
+                    <label className="block font-bold text-slate-700 mb-1">{label} *</label>
+                    <textarea
+                      rows={3}
+                      required
+                      value={reportSections[key] || ''}
+                      onChange={(e) => setReportSections((prev) => ({ ...prev, [key]: e.target.value }))}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white outline-none focus:border-emerald-500"
+                      placeholder={key === 'cash_flows' ? 'Jelaskan arus kas operasi, investasi, dan pendanaan berdasarkan data periode.' : 'Isi bagian laporan berdasarkan data dan dokumen production yang dapat dipertanggungjawabkan.'}
+                    />
+                  </div>
+                ))}
               </div>
 
               <div className="pt-2 flex gap-3">
@@ -2233,7 +2267,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                   className="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-xs"
                 >
                   <Send size={14} />
-                  <span>Kirim ke Portal Investor</span>
+                  <span>Simpan Draft Laporan Terstruktur</span>
                 </button>
                 <button
                   type="button"
