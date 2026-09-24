@@ -179,6 +179,19 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
   const [repHl1Val, setRepHl1Val] = useState('');
   const [repHl2Label, setRepHl2Label] = useState('');
   const [repHl2Val, setRepHl2Val] = useState('');
+  const [reportSections, setReportSections] = useState<Record<string, string>>({
+    executive_summary: '',
+    company_information: '',
+    performance_overview: '',
+    financial_position: '',
+    profit_loss_comprehensive: '',
+    changes_in_equity: '',
+    cash_flows: '',
+    notes_to_financial_statements: '',
+    material_events: '',
+    management_follow_up: '',
+    approval: '',
+  });
 
   // CMS inputs
   const [cmsHeadline, setCmsHeadline] = useState(portalSettings.heroHeadline);
@@ -365,7 +378,10 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
         date: dateFormatted,
         category: repCategory,
         summary: repSummary,
-        contentDetails: repSummary,
+        contentDetails: JSON.stringify({
+          ...reportSections,
+          executive_summary: reportSections.executive_summary || repSummary,
+        }),
         auditor: repAuditor || undefined,
         fileSize: '-',
         fileType: 'DIGITAL',
@@ -379,6 +395,19 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
       setShowAddReportModal(false);
       setRepTitle('');
       setRepSummary('');
+      setReportSections({
+        executive_summary: '',
+        company_information: '',
+        performance_overview: '',
+        financial_position: '',
+        profit_loss_comprehensive: '',
+        changes_in_equity: '',
+        cash_flows: '',
+        notes_to_financial_statements: '',
+        material_events: '',
+        management_follow_up: '',
+        approval: '',
+      });
       triggerAlert('Draft laporan resmi berhasil dibuat di financial reporting production.');
     } catch (error) {
       alert(error instanceof Error ? error.message : 'Laporan gagal dibuat.');
