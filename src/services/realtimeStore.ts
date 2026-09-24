@@ -694,16 +694,25 @@ class RealtimeStore {
     if (!period) throw new Error('Belum ada periode keuangan production. Buat periode keuangan terlebih dahulu.');
 
     const source = report.auditor ? 'audited' : 'internal';
-    const { data: reportId, error } = await appSchema.rpc('create_financial_report_with_draft', {
+    let structuredContent: Record<string, string>;
+    try {
+      structuredContent = JSON.parse(report.contentDetails || '{}') as Record<string, string>;
+    } catch {
+      throw new Error('Struktur laporan tidak valid. Lengkapi seluruh bagian laporan sebelum menyimpan.');
+    }
+    const { data: created, error } = await appSchema.rpc('create_financial_report_with_structured_draft', {
       p_financial_period_id: period.id,
       p_title: report.title,
       p_summary: report.summary || null,
       p_visibility: 'investors',
       p_source: source,
       p_prepared_by: report.auditor || null,
-      p_notes: report.contentDetails || null,
+      p_structured_content: structuredContent,
     });
     if (error) throw new Error(error.message || 'Laporan gagal dibuat.');
+    const createdRow = Array.isArray(created) ? created[0] : created;
+    const reportId = createdRow?.report_id;
+    if (!reportId) throw new Error('Laporan dibuat tetapi ID production tidak diterima.');
 
     await this.refreshFromProduction();
     const synced = this.reports.find((item) => item.id === reportId);
