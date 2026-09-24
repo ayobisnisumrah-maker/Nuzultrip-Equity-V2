@@ -113,10 +113,12 @@ export const RoadmapSection: React.FC = () => {
     if (!scrollRef.current) return;
     const targetCard = scrollRef.current.children[index] as HTMLElement;
     if (targetCard) {
-      targetCard.scrollIntoView({
+      const container = scrollRef.current;
+      const targetLeft =
+        targetCard.offsetLeft - (container.clientWidth - targetCard.clientWidth) / 2;
+      container.scrollTo({
+        left: Math.max(0, targetLeft),
         behavior: 'smooth',
-        block: 'nearest',
-        inline: 'center',
       });
       setActiveIndex(index);
     }
