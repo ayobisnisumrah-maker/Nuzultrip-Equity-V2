@@ -1706,88 +1706,37 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
 
           {/* DISTRIBUSI BAGI HASIL */}
           {activeNav === 'distribusi_bagi_hasil' && (
-            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-2xs space-y-6 animate-in fade-in">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-                <div>
-                  <h3 className="text-lg font-black text-slate-900">
-                    Distribusi Bagi Hasil (Dividen Payout)
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    Kalkulasi dan eksekusi pembayaran bagi hasil bulanan kepada seluruh investor pemegang unit via BSI.
+            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-2xs space-y-5 animate-in fade-in">
+              <div className="pb-4 border-b border-slate-100">
+                <h3 className="text-lg font-black text-slate-900">Distribusi Bagi Hasil</h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Data di bawah hanya berasal dari distribusi dan alokasi yang tercatat di Supabase production. Dashboard tidak mensimulasikan transfer bank.
+                </p>
+              </div>
+              {realtimeStore.getDividends().length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
+                  <DollarSign size={24} className="mx-auto text-slate-400 mb-2" />
+                  <div className="text-sm font-bold text-slate-800">Belum ada distribusi production</div>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Buat dan setujui distribusi melalui workflow keuangan production sebelum alokasi atau pembayaran ditampilkan di sini.
                   </p>
                 </div>
-                <div className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
-                  BSI Cash Management Connected
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                  <h4 className="font-bold text-slate-900 text-sm">Formulir Eksekusi Bagi Hasil</h4>
-                  <div className="space-y-3 text-xs">
-                    <div>
-                      <label className="block font-semibold text-slate-700 mb-1">Periode Keuangan</label>
-                      <input
-                        type="text"
-                        defaultValue="Periode Juni 2026"
-                        className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-semibold text-slate-700 mb-1">Total Pool Dividen (IDR)</label>
-                      <input
-                        type="text"
-                        defaultValue="Rp 115.200.000"
-                        className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white font-mono font-bold"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-semibold text-slate-700 mb-1">Nominal per Unit Saham</label>
-                      <input
-                        type="text"
-                        defaultValue="Rp 3.200.000 / Unit"
-                        disabled
-                        className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-100 font-mono font-bold text-emerald-700"
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        triggerAlert('Eksekusi transfer bagi hasil periode Juni 2026 berhasil disalurkan ke rekening seluruh investor via BSI.');
-                      }}
-                      className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow-xs cursor-pointer"
-                    >
-                      Eksekusi Pembayaran Bagi Hasil
-                    </button>
-                  </div>
-                </div>
-
-                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                  <h4 className="font-bold text-slate-900 text-sm">Riwayat Pembagian Terakhir</h4>
-                  <div className="divide-y divide-slate-200 text-xs">
-                    <div className="py-2.5 flex items-center justify-between">
+              ) : (
+                <div className="divide-y divide-slate-100">
+                  {realtimeStore.getDividends().map((item) => (
+                    <div key={item.id} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
                       <div>
-                        <div className="font-bold text-slate-800">Bagi Hasil Mei 2026</div>
-                        <div className="text-[10.5px] text-slate-400">Ditransfer 31 Mei 2026</div>
+                        <div className="font-bold text-slate-900">{item.period}</div>
+                        <div className="text-slate-500">{item.paymentDate} · {item.referenceNumber}</div>
                       </div>
-                      <div className="text-right">
-                        <div className="font-bold font-mono text-emerald-700">Rp 108.000.000</div>
-                        <div className="text-[10px] text-slate-500">Lunas 100%</div>
-                      </div>
-                    </div>
-                    <div className="py-2.5 flex items-center justify-between">
-                      <div>
-                        <div className="font-bold text-slate-800">Bagi Hasil April 2026</div>
-                        <div className="text-[10.5px] text-slate-400">Ditransfer 30 Apr 2026</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-bold font-mono text-emerald-700">Rp 96.000.000</div>
-                        <div className="text-[10px] text-slate-500">Lunas 100%</div>
+                      <div className="sm:text-right">
+                        <div className="font-bold font-mono text-slate-900">{formatRupiah(item.totalNet)}</div>
+                        <div className={item.status === 'Berhasil' ? 'text-emerald-700 font-bold' : 'text-amber-700 font-bold'}>{item.status}</div>
                       </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
-              </div>
+              )}
             </div>
           )}
 
