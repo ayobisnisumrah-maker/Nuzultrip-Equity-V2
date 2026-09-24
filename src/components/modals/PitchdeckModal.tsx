@@ -72,7 +72,9 @@ export const PitchdeckModal: React.FC<PitchdeckModalProps> = ({ isOpen, onClose 
         </div>
 
         <p className="text-[14px] text-[#555555] leading-relaxed mb-6">
-          Dapatkan ringkasan eksekutif, analisis pasar ibadah Muslim 2024–2026, roadmap teknologi, struktur penawaran 50 unit equity, dan proyeksi keuangan Nuzultrip.
+          {pitchdeck
+            ? `Dokumen “${pitchdeck.title}” adalah Pitch Deck PDF publik terbaru yang telah dipublikasikan melalui Dashboard Admin.`
+            : 'Pitch Deck hanya tersedia setelah Admin Dokumen mengunggah PDF dan menyelesaikan workflow publikasi.'}
         </p>
 
         {/* Highlights Preview */}
@@ -111,7 +113,8 @@ export const PitchdeckModal: React.FC<PitchdeckModalProps> = ({ isOpen, onClose 
             </button>
           </div>
         ) : (
-          <form onSubmit={handleDownload} className="space-y-4">\n            {loadError && <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold">{loadError}</div>}
+          <form onSubmit={handleDownload} className="space-y-4">
+            {loadError && <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold">{loadError}</div>}
             <div>
               <label className="block text-[13px] font-bold text-[#111111] mb-1">
                 Masukkan Email Anda untuk Menerima Dokumen *
@@ -128,7 +131,7 @@ export const PitchdeckModal: React.FC<PitchdeckModalProps> = ({ isOpen, onClose 
 
             <button
               type="submit"
-              disabled={downloading}
+              disabled={downloading || !pitchdeck}
               className="w-full py-3 px-5 rounded-xl bg-[#090909] text-white font-bold text-[14.5px] flex items-center justify-center gap-2 hover:bg-[#222222] active:scale-98 transition-all cursor-pointer disabled:opacity-70"
             >
               {downloading ? (
