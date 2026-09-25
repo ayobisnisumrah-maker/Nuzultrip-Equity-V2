@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowRight } from 'lucide-react';
+import { StaggerText } from './LetterStagger';
 
 interface ArrowButtonProps {
   children: React.ReactNode;
@@ -10,6 +11,7 @@ interface ArrowButtonProps {
   size?: 'sm' | 'md' | 'lg';
   id?: string;
   ariaLabel?: string;
+  enableStagger?: boolean;
 }
 
 export const ArrowButton: React.FC<ArrowButtonProps> = ({
@@ -21,6 +23,7 @@ export const ArrowButton: React.FC<ArrowButtonProps> = ({
   size = 'md',
   id,
   ariaLabel,
+  enableStagger = true,
 }) => {
   const isLinkVariant = variant === 'link' || variant === 'dark-link';
 
@@ -58,9 +61,16 @@ export const ArrowButton: React.FC<ArrowButtonProps> = ({
     sizeStyles = 'text-[15px] py-1';
   }
 
+  const renderedText =
+    enableStagger && typeof children === 'string' ? (
+      <StaggerText text={children} />
+    ) : (
+      <span className="truncate">{children}</span>
+    );
+
   const content = (
     <>
-      <span className="truncate">{children}</span>
+      {renderedText}
       <ArrowRight
         size={isLinkVariant ? 17 : 16}
         className={`ml-2 shrink-0 transition-transform duration-200 group-hover:translate-x-1.5 ${
