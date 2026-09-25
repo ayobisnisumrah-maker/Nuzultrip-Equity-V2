@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AlertCircle, BarChart3, Calendar, CheckCircle2, FileText, RefreshCw, TrendingUp } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { uploadPublicPdf } from '../../services/documentService';
 
 interface FinancialManagementViewProps {
   initialSubTab?: 'ringkasan' | 'periode' | 'kpi';
@@ -77,6 +78,7 @@ export const FinancialManagementView: React.FC<FinancialManagementViewProps> = (
   const [message, setMessage] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
+  const [uploadingPdf, setUploadingPdf] = useState(false);
   const [draftItems, setDraftItems] = useState<Array<{statement:string;category:string;line_key:string;label:string;amount:string;note:string}>>([]);
   const [calkDraft, setCalkDraft] = useState('');
 
@@ -243,6 +245,31 @@ export const FinancialManagementView: React.FC<FinancialManagementViewProps> = (
     setSaving(false);
   };
 
+  const uploadOfficialPdf = async (file: File) => {
+    if (!currentReport || !currentVersion) return;
+    if (file.type !== 'application/pdf' || !file.name.toLowerCase().endsWith('.pdf')) {
+      setMessage('File laporan resmi wajib PDF.');
+      return;
+    }
+    if (!tocSections.every((section) => section.complete) || !balanceCheck.balanced) {
+      setMessage('PDF belum dapat didaftarkan: daftar isi wajib lengkap dan neraca harus seimbang.');
+      return;
+    }
+    setUploadingPdf(true); setMessage(null);
+    try {
+      await uploadPublicPdf(file, {
+        title: currentReport.title,
+        summary: currentReport.summary || 'Laporan keuangan resmi untuk investor.',
+        kind: 'investor_report',
+      });
+      setMessage('PDF berhasil masuk Dokumen Portal sebagai Draft. Admin Dokumen wajib menjalankan Review → Approved → Published sebelum tersedia untuk investor.');
+    } catch (uploadError) {
+      setMessage(uploadError instanceof Error ? uploadError.message : 'Upload PDF laporan gagal.');
+    } finally {
+      setUploadingPdf(false);
+    }
+  };
+
   const printOfficialReport = () => {
     if (!currentReport || !currentVersion) return;
     const period = periods.find((p) => p.id === currentReport.financial_period_id);
@@ -379,6 +406,10 @@ export const FinancialManagementView: React.FC<FinancialManagementViewProps> = (
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <button type="button" onClick={printOfficialReport} className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-bold">Cetak / Simpan PDF</button>
+                    <label className={`px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-bold cursor-pointer ${uploadingPdf?'opacity-50 pointer-events-none':''}`}>
+                      {uploadingPdf ? 'Mengunggah PDF...' : 'Daftarkan PDF ke Dokumen Portal'}
+                      <input type="file" accept="application/pdf,.pdf" className="hidden" disabled={uploadingPdf} onChange={(e)=>{const file=e.target.files?.[0]; if(file) void uploadOfficialPdf(file); e.currentTarget.value='';}}/>
+                    </label>
                     {currentReport.status === 'draft' && <button type="button" disabled={transitioning} onClick={()=>void transitionReport('review')} className="px-3 py-2 rounded-xl bg-amber-500 text-white text-xs font-bold disabled:opacity-50">Kirim ke Review</button>}
                     {currentReport.status === 'review' && <button type="button" disabled={transitioning} onClick={()=>void transitionReport('approved')} className="px-3 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold disabled:opacity-50">Setujui Laporan</button>}
                     {currentReport.status === 'approved' && <button type="button" disabled={transitioning} onClick={()=>void transitionReport('published')} className="px-3 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold disabled:opacity-50">Publish ke Investor</button>}
