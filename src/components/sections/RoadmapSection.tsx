@@ -24,93 +24,10 @@ interface RoadmapPhase {
   kpi?: { label: string; value: string };
 }
 
-const ROADMAP_PHASES: RoadmapPhase[] = [
-  {
-    step: '01',
-    phaseNumber: 1,
-    period: 'Jan – Jun 2024',
-    title: 'Fondasi & Legalitas PPIU Resmi',
-    status: 'completed',
-    statusLabel: 'Terlaksana',
-    summary:
-      'Pendirian legalitas PT Nuzul Tour & Travel, perizinan resmi PPIU Kemenag RI, dan standardisasi SOP operasional jamaah.',
-    highlights: [
-      'Izin resmi PPIU Kemenag RI',
-      'Standardisasi SOP handling bandara & hotel',
-      'Kemitraan awal hotel Makkah & Madinah',
-    ],
-    kpi: { label: 'Kepatuhan Hukum', value: '100% Terverifikasi' },
-  },
-  {
-    step: '02',
-    phaseNumber: 2,
-    period: 'Jul – Des 2024',
-    title: 'Penguatan Rantai Pasok & Konsorsium',
-    status: 'completed',
-    statusLabel: 'Terlaksana',
-    summary:
-      'Pengamanan blok seat reguler maskapai Garuda Indonesia & Saudia Airlines, serta jaringan konsorsium dengan 15+ travel daerah.',
-    highlights: [
-      'Blok seat maskapai terpercaya',
-      'Tim muthowif tersertifikasi di Saudi',
-      'Konsorsium 15+ biro travel daerah',
-    ],
-    kpi: { label: 'Jamaah Terlayani', value: '1.200+ Jamaah' },
-  },
-  {
-    step: '03',
-    phaseNumber: 3,
-    period: 'Jan – Des 2025',
-    title: 'Transformasi Platform Digital & Halal Tour',
-    status: 'completed',
-    statusLabel: 'Terlaksana',
-    summary:
-      'Automasi portal investor real-time, peluncuran aplikasi jamaah dengan pelacak bagasi, serta perluasan rute Halal Tour mancanegara.',
-    highlights: [
-      'Portal investor dividen otomatis',
-      'Aplikasi mobile & smart baggage tracker',
-      'Ekspansi rute Halal Tour global',
-    ],
-    kpi: { label: 'Pencapaian Jamaah', value: '4.500+ Jamaah' },
-  },
-  {
-    step: '04',
-    phaseNumber: 4,
-    period: 'Jan – Des 2026',
-    title: 'Peluang Equity 40% & Platform B2B',
-    status: 'active',
-    statusLabel: 'Fase Aktif',
-    summary:
-      'Pembukaan 50 unit equity strategis bagi investor dengan bagi hasil bulanan, serta peluncuran platform live booking B2B untuk mitra agen.',
-    highlights: [
-      'Penawaran 50 unit equity (Rp.100 Juta/unit)',
-      'Skema bagi hasil bulanan transparan',
-      'Platform booking B2B inventori live',
-    ],
-    kpi: { label: 'Target Equity', value: 'Rp.5 Miliar' },
-  },
-  {
-    step: '05',
-    phaseNumber: 5,
-    period: '2027 – 2028',
-    title: 'Holding Ekosistem & Tata Kelola IPO',
-    status: 'upcoming',
-    statusLabel: 'Rencana Mendatang',
-    summary:
-      'Manajemen pengelolaan hotel di Tanah Suci, integrasi rantai pasok katering, penerapan standar GCG, dan persiapan go-public (IPO).',
-    highlights: [
-      'Manajemen long-lease hotel di Saudi',
-      'Audit akuntan publik independen',
-      'Penyusunan tata kelola siap IPO',
-    ],
-    kpi: { label: 'Target Valuasi', value: 'Rp.50+ Miliar' },
-  },
-];
-
 export const RoadmapSection: React.FC = () => {
-  const [activeIndex, setActiveIndex] = useState(3); // Default to current active phase in 2026 (Fase 04 Peluang Equity)
+  const [activeIndex, setActiveIndex] = useState(0);
   const [cms, setCms] = useState<any>(null);
-  const phases: RoadmapPhase[] = Array.isArray(cms?.phases) && cms.phases.length ? cms.phases : ROADMAP_PHASES;
+  const phases: RoadmapPhase[] = Array.isArray(cms?.phases) ? cms.phases : [];
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(()=>{let active=true;const sync=async()=>{try{const sections=await loadPublicHome();if(active)setCms(sections.find((s)=>s.anchorId==='perkembangan')?.content||null)}catch{}};void sync();const channel=supabase?.channel('public-roadmap-cms').on('postgres_changes',{event:'*',schema:'public',table:'portal_sections'},()=>void sync()).on('postgres_changes',{event:'*',schema:'public',table:'portal_section_versions'},()=>void sync()).subscribe();return()=>{active=false;if(channel&&supabase)void supabase.removeChannel(channel)}},[]);
@@ -131,12 +48,12 @@ export const RoadmapSection: React.FC = () => {
   };
 
   useEffect(() => {
-    // Initial centering on active phase 04
+    const target=Math.max(0,phases.findIndex(p=>p.status==='active'));
     const timer = setTimeout(() => {
-      scrollToIndex(3);
+      if(phases.length)scrollToIndex(target);
     }, 250);
     return () => clearTimeout(timer);
-  }, []);
+  }, [phases.length]);
 
   const handlePrev = () => {
     const nextIdx = Math.max(0, activeIndex - 1);
