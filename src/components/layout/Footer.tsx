@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { ArrowRight, Instagram, Facebook, Disc as TikTokIcon, Phone, Mail, MapPin, ShieldCheck } from 'lucide-react';
 import { Container } from './Container';
 import { realtimeStore, PortalSettings } from '../../services/realtimeStore';
+import { loadPublicHome } from '../../services/publicPortalService';
+import { supabase } from '../../lib/supabase';
 
 interface FooterProps {
   onOpenInterest?: () => void;
@@ -15,6 +17,15 @@ export const Footer: React.FC<FooterProps> = ({
   const [settings, setSettings] = useState<PortalSettings>(() =>
     realtimeStore.getPortalSettings()
   );
+  const [logoUrl, setLogoUrl] = useState('');
+
+  useEffect(() => {
+    let active=true;
+    const syncLogo=async()=>{try{const sections=await loadPublicHome();const home=sections.find((s)=>s.anchorId==='beranda');if(active)setLogoUrl(String(home?.content?.logo_url||''))}catch{}};
+    void syncLogo();
+    const channel=supabase?.channel('public-footer-brand').on('postgres_changes',{event:'*',schema:'public',table:'portal_sections'},()=>void syncLogo()).on('postgres_changes',{event:'*',schema:'public',table:'portal_section_versions'},()=>void syncLogo()).subscribe();
+    return()=>{active=false;if(channel&&supabase)void supabase.removeChannel(channel)};
+  }, []);
 
   useEffect(() => {
     const update = () => {
@@ -54,12 +65,10 @@ export const Footer: React.FC<FooterProps> = ({
           <div className="lg:col-span-4 flex flex-col justify-between">
             <div>
               <div className="flex items-center mb-4">
-                <span className="text-[24px] sm:text-[26px] font-extrabold tracking-tight text-white">
-                  {settings.companyName.split('(')[0].trim() || 'Nuzultrip'}
-                </span>
-                <span className="ml-2 text-[10px] font-bold uppercase tracking-[0.16em] px-1.5 py-0.5 rounded bg-white/10 text-white/80 border border-white/15">
-                  Equity
-                </span>
+                {logoUrl ? <img src={logoUrl} alt="Nuzultrip Equity" className="h-10 sm:h-11 w-auto max-w-[220px] object-contain" /> : <>
+                  <span className="text-[24px] sm:text-[26px] font-extrabold tracking-tight text-white">{settings.companyName.split('(')[0].trim() || 'Nuzultrip'}</span>
+                  <span className="ml-2 text-[10px] font-bold uppercase tracking-[0.16em] px-1.5 py-0.5 rounded bg-white/10 text-white/80 border border-white/15">Equity</span>
+                </>}
               </div>
               <p className="text-[14px] sm:text-[15px] text-white/70 leading-relaxed max-w-[320px]">
                 Melayani perjalanan Muslim Indonesia dengan hati, profesionalisme, dan teknologi.
