@@ -1,30 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { X, CheckCircle, Calculator, ShieldCheck, ArrowRight } from 'lucide-react';
-import { realtimeStore } from '../../services/realtimeStore';
 
 interface EquityInterestModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialUnits?: number;
 }
 
 export const EquityInterestModal: React.FC<EquityInterestModalProps> = ({
   isOpen,
   onClose,
-  initialUnits = 1,
 }) => {
-  const [units, setUnits] = useState<number>(initialUnits);
+  const [units, setUnits] = useState<number>(1);
   const [name, setName] = useState<string>('');
   const [phone, setPhone] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [investorType, setInvestorType] = useState<string>('Individu');
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (isOpen && initialUnits) {
-      setUnits(initialUnits);
-    }
-  }, [isOpen, initialUnits]);
 
   if (!isOpen) return null;
 
@@ -35,19 +26,6 @@ export const EquityInterestModal: React.FC<EquityInterestModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitted(true);
-
-    // Push into realtimeStore messages & audit logs
-    realtimeStore.addMessage({
-      senderName: name.trim() || 'Calon Investor',
-      senderPhone: phone.trim() || '-',
-      senderEmail: email.trim() || '-',
-      category: 'equity_interest',
-      subject: `Pengajuan Minat ${units} Unit Equity (${investorType})`,
-      message: `Pengajuan minat kepemilikan ${units} unit saham (estimasi investasi Rp ${(
-        units * pricePerUnit
-      ).toLocaleString('id-ID')}) oleh ${name} tipe investor: ${investorType}.`,
-      requestedUnits: units,
-    });
   };
 
   const handleReset = () => {
