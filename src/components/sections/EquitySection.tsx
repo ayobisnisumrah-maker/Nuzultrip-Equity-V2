@@ -6,6 +6,8 @@ import { AnimatedNumber } from '../ui/AnimatedNumber';
 import { EquityRoiCalculator } from '../equity/EquityRoiCalculator';
 import { EQUITY_METRICS, IMAGES, StatisticItem } from '../../data/landingData';
 import { realtimeStore, PortalSettings } from '../../services/realtimeStore';
+import { loadPublicHome } from '../../services/publicPortalService';
+import { supabase } from '../../lib/supabase';
 
 interface EquitySectionProps {
   onOpenInterest: (units?: number) => void;
@@ -19,6 +21,9 @@ export const EquitySection: React.FC<EquitySectionProps> = ({
   const [settings, setSettings] = useState<PortalSettings>(() =>
     realtimeStore.getPortalSettings()
   );
+  const [cms, setCms] = useState<any>(null);
+
+  useEffect(()=>{let active=true;const sync=async()=>{try{const sections=await loadPublicHome();if(active)setCms(sections.find((s)=>s.anchorId==='ringkasan')?.content||null)}catch{}};void sync();const channel=supabase?.channel('public-ringkasan-cms').on('postgres_changes',{event:'*',schema:'public',table:'portal_sections'},()=>void sync()).on('postgres_changes',{event:'*',schema:'public',table:'portal_section_versions'},()=>void sync()).subscribe();return()=>{active=false;if(channel&&supabase)void supabase.removeChannel(channel)}},[]);
 
   useEffect(() => {
     const update = () => {
@@ -140,7 +145,7 @@ export const EquitySection: React.FC<EquitySectionProps> = ({
             <div className="relative w-full h-full min-h-[420px] sm:min-h-[480px] rounded-2xl overflow-hidden shadow-lg border border-black/10 flex flex-col justify-between p-6 sm:p-7 text-white group">
               {/* Background Photo with dark overlay */}
               <img
-                src={IMAGES.nabawiDusk}
+                src={cms?.image_url || IMAGES.nabawiDusk}
                 alt="Masjid Nabawi di waktu senja"
                 className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
                 loading="lazy"
