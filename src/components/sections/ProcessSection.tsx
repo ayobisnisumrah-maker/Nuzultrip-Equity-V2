@@ -13,6 +13,8 @@ import {
 import { Container } from '../layout/Container';
 import { Eyebrow } from '../ui/Eyebrow';
 import { realtimeStore, PortalSettings } from '../../services/realtimeStore';
+import { loadPublicHome } from '../../services/publicPortalService';
+import { supabase } from '../../lib/supabase';
 
 interface ProcessSectionProps {
   onOpenDetail: () => void;
@@ -80,6 +82,9 @@ export const ProcessSection: React.FC<ProcessSectionProps> = ({
   const [settings, setSettings] = useState<PortalSettings>(() =>
     realtimeStore.getPortalSettings()
   );
+  const [cms, setCms] = useState<any>(null);
+
+  useEffect(()=>{let active=true;const sync=async()=>{try{const sections=await loadPublicHome();if(active)setCms(sections.find((s)=>s.anchorId==='governance')?.content||sections.find((s)=>s.anchorId==='proses')?.content||null)}catch{}};void sync();const channel=supabase?.channel('public-process-cms').on('postgres_changes',{event:'*',schema:'public',table:'portal_sections'},()=>void sync()).on('postgres_changes',{event:'*',schema:'public',table:'portal_section_versions'},()=>void sync()).subscribe();return()=>{active=false;if(channel&&supabase)void supabase.removeChannel(channel)}},[]);
 
   useEffect(() => {
     const update = () => {
@@ -89,16 +94,18 @@ export const ProcessSection: React.FC<ProcessSectionProps> = ({
     return () => unsub();
   }, []);
 
-  // Blend dynamic processList from settings if available
   const steps: StepItem[] = DEFAULT_STEPS.map((step, idx) => {
-    if (settings.processList && settings.processList[idx]) {
-      return {
-        ...step,
-        title: settings.processList[idx].title || step.title,
-        description: settings.processList[idx].description || step.description,
-      };
-    }
-    return step;
+    const source = Array.isArray(cms?.steps) ? cms.steps[idx] : settings.processList?.[idx];
+    if (!source) return step;
+    return {
+      ...step,
+      id: source.id || step.id,
+      stepNumber: source.stepNumber || source.step_number || step.stepNumber,
+      title: source.title || step.title,
+      description: source.description || step.description,
+      duration: source.duration || step.duration,
+      output: source.output || step.output,
+    };
   });
 
   return (
@@ -115,13 +122,12 @@ export const ProcessSection: React.FC<ProcessSectionProps> = ({
       <Container size="default">
         {/* Section Header - Clean & Focused */}
         <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-16 flex flex-col items-center px-4">
-          <Eyebrow variant="dark">ALUR & TAHAPAN INVESTASI</Eyebrow>
+          <Eyebrow variant="dark">{cms?.eyebrow || 'ALUR & TAHAPAN INVESTASI'}</Eyebrow>
           <h2 className="font-h2 font-bold text-white leading-[1.14] tracking-tight mb-3 sm:mb-4">
-            Langkah Mudah<br />
-            Menjadi Bagian dari Kami
+            {cms?.title || <>Langkah Mudah<br />Menjadi Bagian dari Kami</>}
           </h2>
           <p className="text-[15px] sm:text-[16px] text-white/70 leading-[1.6] max-w-lg">
-            Empat tahapan transparan dan berkepastian hukum untuk menjadi pemegang unit equity resmi ekosistem Nuzultrip.
+            {cms?.description || 'Empat tahapan transparan dan berkepastian hukum untuk menjadi pemegang unit equity resmi ekosistem Nuzultrip.'}
           </p>
         </div>
 
