@@ -4,6 +4,8 @@ import { Eyebrow } from '../ui/Eyebrow';
 import { ArrowButton } from '../ui/ArrowButton';
 import { AnimatedNumber } from '../ui/AnimatedNumber';
 import { COMPANY_METRICS, IMAGES } from '../../data/landingData';
+import { loadPublicHome } from '../../services/publicPortalService';
+import { supabase } from '../../lib/supabase';
 
 interface CompanySectionProps {
   onOpenDetail: () => void;
@@ -11,15 +13,19 @@ interface CompanySectionProps {
 
 export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [cms, setCms] = useState<any>(null);
+  const companyImages = Array.isArray(cms?.images) && cms.images.length ? cms.images : cms?.image_url ? [cms.image_url] : IMAGES.companySlices;
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
-  // Preload all 5 images on mount
+  useEffect(()=>{let active=true;const sync=async()=>{try{const sections=await loadPublicHome();if(active)setCms(sections.find((s)=>s.anchorId==='bisnis')?.content||null)}catch{}};void sync();const channel=supabase?.channel('public-company-cms').on('postgres_changes',{event:'*',schema:'public',table:'portal_sections'},()=>void sync()).on('postgres_changes',{event:'*',schema:'public',table:'portal_section_versions'},()=>void sync()).subscribe();return()=>{active=false;if(channel&&supabase)void supabase.removeChannel(channel)}},[]);
+
+  // Preload published CMS images or current fallback images
   useEffect(() => {
-    IMAGES.companySlices.forEach((url) => {
+    companyImages.forEach((url:string) => {
       const img = new Image();
       img.src = url;
     });
-  }, []);
+  }, [companyImages.join('|')]);
 
   // Automatic slideshow for mobile or when not hovered
   useEffect(() => {
@@ -27,7 +33,7 @@ export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) 
     if (!isTouch) return;
 
     const interval = setInterval(() => {
-      setActiveImageIndex((prev) => (prev + 1) % IMAGES.companySlices.length);
+      setActiveImageIndex((prev) => (prev + 1) % companyImages.length);
     }, 3200);
 
     return () => clearInterval(interval);
@@ -94,7 +100,7 @@ export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) 
               onMouseLeave={handleMouseLeave}
               className="relative w-full h-[320px] sm:h-[400px] lg:h-[440px] rounded-2xl overflow-hidden border border-black/[0.1] bg-[#E8E8E4] shadow-sm cursor-crosshair group select-none"
             >
-              {IMAGES.companySlices.map((url, idx) => (
+              {companyImages.map((url:string, idx:number) => (
                 <div
                   key={url}
                   className={`absolute inset-0 transition-opacity duration-300 ease-out ${
