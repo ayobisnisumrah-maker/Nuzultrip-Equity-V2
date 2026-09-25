@@ -74,7 +74,7 @@ export function PortalSectionEditor(){
  const updateDetailList=(owner:'root'|'footer',ownerIndex:number|null,itemIndex:number,value?:string,remove=false)=>{
   const content=getContent();
   if(owner==='root'){const detail={...(content.detail||{})},list=Array.isArray(detail.detailsList)?[...detail.detailsList]:[];if(remove)list.splice(itemIndex,1);else if(itemIndex===list.length)list.push(value||'');else list[itemIndex]=value||'';patchContent('detail',{...detail,detailsList:list});return}
-  const entries=Array.isArray(content.footer_details)?[...content.footer_details]:[],entry={...(entries[ownerIndex as number]||{})},list=Array.isArray(entry.detailsList)?[...entry.detailsList]:[];if(remove)list.splice(itemIndex,1);else if(itemIndex===list.length)list.push(value||'');else list[itemIndex]=value||'';entries[ownerIndex as number]={...entry,detailsList:list};patchContent('footer_details',entries);
+  const entries=Array.isArray(content.footer_details)?[...content.footer_details]:[],entry={...(entries[ownerIndex ?? 0]||{})},list=Array.isArray(entry.detailsList)?[...entry.detailsList]:[];if(remove)list.splice(itemIndex,1);else if(itemIndex===list.length)list.push(value||'');else list[itemIndex]=value||'';entries[ownerIndex as number]={...entry,detailsList:list};patchContent('footer_details',entries);
  };
  const move=async(target:'draft'|'review'|'approved'|'published')=>{if(!selected)return;setBusy(true);try{await transitionSection(selected.id,target);setMsg('Status section diperbarui.');await refresh()}catch(e){setMsg(e instanceof Error?e.message:'Transisi gagal')}finally{setBusy(false)}};
  return <div className="grid lg:grid-cols-[280px_1fr] gap-5">
