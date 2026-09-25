@@ -14,7 +14,7 @@ export async function uploadPublicPdf(file: File, input:{title:string;summary?:s
     const slug=input.title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-'+crypto.randomUUID().slice(0,8);
     const created=await appSchema.rpc('create_document_with_draft',{p_title:input.title,p_slug:slug,p_kind:input.kind,p_summary:input.summary||null,p_visibility:'public',p_file_asset_id:asset.data.id});
     if(created.error) throw created.error;
-    return created.data;
+    return { document: created.data, assetId: asset.data.id, path, fileName: file.name };
   } catch(error) { await supabase.storage.from('company-documents').remove([path]); throw error; }
 }
 
