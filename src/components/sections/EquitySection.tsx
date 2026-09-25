@@ -84,16 +84,12 @@ export const EquitySection: React.FC<EquitySectionProps> = ({
           {/* Column 1: Left Editorial Content */}
           <div className="lg:col-span-4 flex flex-col justify-between h-full">
             <div>
-              <Eyebrow>PELUANG EQUITY</Eyebrow>
+              <Eyebrow>{cms?.eyebrow || 'PELUANG EQUITY'}</Eyebrow>
               <h2 className="font-h2 font-bold text-[#111111] leading-[1.05] tracking-tight mb-5 sm:mb-6">
-                Kesempatan<br />
-                Bertumbuh<br />
-                Bersama
+                {cms?.title || <>Kesempatan<br />Bertumbuh<br />Bersama</>}
               </h2>
               <p className="text-[16px] sm:text-[17px] text-[#555555] leading-[1.65] max-w-[360px]">
-                Jadilah bagian dari perjalanan besar Nuzultrip dengan kepemilikan
-                yang jelas, transparan, dan terstruktur. Gunakan kalkulator di bawah
-                untuk mensimulasikan estimasi dividen bulanan dan potensi ROI Anda.
+                {cms?.description || 'Jadilah bagian dari perjalanan besar Nuzultrip dengan kepemilikan yang jelas, transparan, dan terstruktur.'}
               </p>
             </div>
 
@@ -104,13 +100,13 @@ export const EquitySection: React.FC<EquitySectionProps> = ({
                 onClick={onOpenDetail}
                 id="equity-cta-detail"
               >
-                Lebih Detail Penawaran
+                {cms?.detail_cta_label || 'Lebih Detail Penawaran'}
               </ArrowButton>
               <a
                 href="#kalkulator-roi"
                 className="inline-flex items-center gap-1.5 text-[13.5px] font-bold text-emerald-700 hover:text-emerald-800 transition-colors"
               >
-                <span>Simulasi Kalkulator ROI ↓</span>
+                <span>{cms?.calculator_cta_label || 'Simulasi Kalkulator ROI ↓'}</span>
               </a>
             </div>
           </div>
@@ -146,7 +142,7 @@ export const EquitySection: React.FC<EquitySectionProps> = ({
               {/* Background Photo with dark overlay */}
               <img
                 src={cms?.image_url || IMAGES.nabawiDusk}
-                alt="Masjid Nabawi di waktu senja"
+                alt={cms?.image_alt || 'Visual Nuzultrip Equity'}
                 className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
                 loading="lazy"
               />
@@ -155,9 +151,7 @@ export const EquitySection: React.FC<EquitySectionProps> = ({
               {/* Top Headline on Image */}
               <div className="relative z-10">
                 <h3 className="text-[22px] sm:text-[25px] font-bold leading-[1.2] tracking-tight">
-                  Investasi Hari Ini,<br />
-                  Untuk Masa Depan<br />
-                  yang Lebih Baik.
+                  {cms?.image_title || <>Investasi Hari Ini,<br />Untuk Masa Depan<br />yang Lebih Baik.</>}
                 </h3>
               </div>
 
@@ -169,7 +163,7 @@ export const EquitySection: React.FC<EquitySectionProps> = ({
                   onClick={() => onOpenInterest(1)}
                   className="w-full py-3.5 px-4 rounded-xl bg-white text-[#090909] font-bold text-[14px] flex items-center justify-center gap-2 hover:bg-[#EDEDEB] active:scale-98 transition-all duration-200 shadow-sm group/btn cursor-pointer"
                 >
-                  <span>Ajukan Minat Equity</span>
+                  <span>{cms?.interest_cta_label || 'Ajukan Minat Equity'}</span>
                   <span className="transition-transform duration-200 group-hover/btn:translate-x-1">→</span>
                 </button>
               </div>
