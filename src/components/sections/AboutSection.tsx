@@ -5,6 +5,7 @@ import { AnimatedNumber } from '../ui/AnimatedNumber';
 import { ABOUT_METRICS } from '../../data/landingData';
 import { loadPublicHome } from '../../services/publicPortalService';
 import { realtimeStore, PortalSettings } from '../../services/realtimeStore';
+import { supabase } from '../../lib/supabase';
 
 export const AboutSection: React.FC = () => {
   const [settings, setSettings] = useState<PortalSettings>(() => realtimeStore.getPortalSettings());
@@ -22,8 +23,8 @@ export const AboutSection: React.FC = () => {
       } catch { /* keep current published UI fallback */ }
     };
     void syncCms();
-    const timer = window.setInterval(syncCms, 15000);
-    return () => { active = false; window.clearInterval(timer); };
+    const channel=supabase?.channel('public-about-cms').on('postgres_changes',{event:'*',schema:'public',table:'portal_sections'},()=>void syncCms()).on('postgres_changes',{event:'*',schema:'public',table:'portal_section_versions'},()=>void syncCms()).subscribe();
+    return () => { active = false; if(channel&&supabase)void supabase.removeChannel(channel); };
   }, []);
 
   useEffect(() => {
@@ -74,7 +75,7 @@ export const AboutSection: React.FC = () => {
                 {/* Top Stat Value Section - Tinggi seragam agar garis pemisah tepat sejajar dari metrik 1 hingga 5 */}
                 <div className="w-full flex flex-col items-center justify-end h-[96px] sm:h-[105px] pb-3">
                   <div className="text-[10px] font-bold text-[#8A8A8A] uppercase tracking-[0.16em] mb-2 text-center">
-                    Metrik 0{index + 1}
+                    {cmsIntro?.metric_label_prefix || 'Metrik'} 0{index + 1}
                   </div>
                   <div className="font-stat-large text-[#111111] font-extrabold tracking-tight text-center group-hover:scale-105 transition-transform duration-200">
                     <AnimatedNumber
