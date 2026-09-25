@@ -3,8 +3,7 @@ import { Compass, Globe, Building2, Luggage, ArrowRight } from 'lucide-react';
 import { Container } from '../layout/Container';
 import { Eyebrow } from '../ui/Eyebrow';
 import { ArrowButton } from '../ui/ArrowButton';
-import { SERVICES_LIST, ServiceItem } from '../../data/landingData';
-import { realtimeStore, PortalSettings } from '../../services/realtimeStore';
+import { ServiceItem } from '../../data/landingData';
 import { loadPublicHome } from '../../services/publicPortalService';
 import { supabase } from '../../lib/supabase';
 
@@ -13,26 +12,11 @@ interface ServicesSectionProps {
 }
 
 export const ServicesSection: React.FC<ServicesSectionProps> = ({ onOpenServiceDetail }) => {
-  const [settings, setSettings] = useState<PortalSettings>(() =>
-    realtimeStore.getPortalSettings()
-  );
   const [cms, setCms] = useState<any>(null);
 
   useEffect(()=>{let active=true;const sync=async()=>{try{const sections=await loadPublicHome();if(active)setCms(sections.find((s)=>s.anchorId==='ekosistem')?.content||null)}catch{}};void sync();const channel=supabase?.channel('public-services-cms').on('postgres_changes',{event:'*',schema:'public',table:'portal_sections'},()=>void sync()).on('postgres_changes',{event:'*',schema:'public',table:'portal_section_versions'},()=>void sync()).subscribe();return()=>{active=false;if(channel&&supabase)void supabase.removeChannel(channel)}},[]);
 
-  useEffect(() => {
-    const update = () => {
-      setSettings(realtimeStore.getPortalSettings());
-    };
-    const unsub = realtimeStore.subscribe(update);
-    return () => unsub();
-  }, []);
-
-  const activeServices: ServiceItem[] = Array.isArray(cms?.services) && cms.services.length
-    ? cms.services
-    : (settings.servicesList && settings.servicesList.length > 0)
-      ? (settings.servicesList as any)
-      : SERVICES_LIST;
+  const activeServices: ServiceItem[] = Array.isArray(cms?.services) ? cms.services : [];
 
   const getIcon = (iconName: string) => {
     const iconClass = "transition-colors duration-200 text-[#111111] group-hover:text-white";
@@ -71,10 +55,10 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({ onOpenServiceD
             <div className="pt-8 sm:pt-10 mt-auto">
               <ArrowButton
                 variant="link"
-                onClick={() => onOpenServiceDetail(SERVICES_LIST[0])}
+                onClick={() => activeServices[0] && onOpenServiceDetail(activeServices[0])}
                 id="services-cta-other"
               >
-                Layanan Lainnya
+                {cms?.cta_label || 'Layanan Lainnya'}
               </ArrowButton>
             </div>
           </div>
@@ -108,7 +92,7 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({ onOpenServiceD
                   </div>
 
                   <div className="mt-4 pt-3 border-t border-black/[0.04] flex items-center justify-between text-[13px] font-semibold text-[#111111] opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span>Pelajari selengkapnya</span>
+                    <span>{cms?.card_cta_label || 'Pelajari selengkapnya'}</span>
                     <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                   </div>
                 </div>
