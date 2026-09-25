@@ -180,19 +180,19 @@ export const RoadmapSection: React.FC = () => {
         {/* Header Compact dengan Navigasi Slide */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 sm:mb-10">
           <div>
-            <Eyebrow>ROADMAP PERUSAHAAN</Eyebrow>
+            <Eyebrow>{cms?.eyebrow || 'ROADMAP PERUSAHAAN'}</Eyebrow>
             <h2 className="font-h2 font-bold text-[#111111] leading-[1.12] tracking-tight">
-              Peta Jalan Pertumbuhan Nuzultrip
+              {cms?.title || 'Peta Jalan Pertumbuhan Nuzultrip'}
             </h2>
             <p className="text-[14.5px] sm:text-[15.5px] text-[#666666] mt-2 max-w-xl">
-              Tahapan strategis pengembangan bisnis, platform teknologi, dan tata kelola investasi jangka panjang.
+              {cms?.description || 'Tahapan strategis pengembangan bisnis, platform teknologi, dan tata kelola investasi jangka panjang.'}
             </p>
           </div>
 
           {/* Controls: Phase Indicator & Navigation Arrows */}
           <div className="flex items-center gap-3 shrink-0 self-start md:self-end">
             <span className="text-xs font-bold text-[#666666] tracking-wider uppercase bg-black/[0.04] px-3 py-1.5 rounded-full border border-black/[0.06]">
-              Fase 0{activeIndex + 1} / 0{phases.length}
+              {cms?.phase_label || 'Fase'} 0{activeIndex + 1} / 0{phases.length}
             </span>
 
             <div className="flex items-center gap-1.5">
@@ -200,7 +200,7 @@ export const RoadmapSection: React.FC = () => {
                 type="button"
                 onClick={handlePrev}
                 disabled={activeIndex === 0}
-                aria-label="Fase sebelumnya"
+                aria-label={cms?.previous_label || 'Fase sebelumnya'}
                 className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all cursor-pointer ${
                   activeIndex === 0
                     ? 'border-black/[0.08] text-black/20 cursor-not-allowed'
@@ -213,7 +213,7 @@ export const RoadmapSection: React.FC = () => {
                 type="button"
                 onClick={handleNext}
                 disabled={activeIndex === phases.length - 1}
-                aria-label="Fase berikutnya"
+                aria-label={cms?.next_label || 'Fase berikutnya'}
                 className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all cursor-pointer ${
                   activeIndex === phases.length - 1
                     ? 'border-black/[0.08] text-black/20 cursor-not-allowed'
@@ -242,7 +242,7 @@ export const RoadmapSection: React.FC = () => {
                 }`}
               >
                 <div className="flex items-center justify-between text-[11px] font-bold">
-                  <span>FASE {phase.step}</span>
+                  <span>{cms?.phase_label || 'FASE'} {phase.step}</span>
                   {phase.status === 'completed' && (
                     <span className={isCurrent ? 'text-white/80' : 'text-emerald-600'}>✓</span>
                   )}
@@ -285,7 +285,7 @@ export const RoadmapSection: React.FC = () => {
                 <div>
                   <div className="flex items-center justify-between mb-3.5">
                     <span className="text-[12px] font-extrabold text-[#111111] tracking-wider uppercase">
-                      FASE {item.step}
+                      {cms?.phase_label || 'FASE'} {item.step}
                     </span>
                     <span
                       className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${
