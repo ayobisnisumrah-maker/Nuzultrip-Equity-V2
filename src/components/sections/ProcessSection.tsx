@@ -64,12 +64,12 @@ export const ProcessSection: React.FC<ProcessSectionProps> = ({
       <Container size="default">
         {/* Section Header - Clean & Focused */}
         <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-16 flex flex-col items-center px-4">
-          <Eyebrow variant="dark">{cms?.eyebrow || 'ALUR & TAHAPAN INVESTASI'}</Eyebrow>
+          <Eyebrow variant="dark">{cms?.eyebrow || ''}</Eyebrow>
           <h2 className="font-h2 font-bold text-white leading-[1.14] tracking-tight mb-3 sm:mb-4">
-            {cms?.title || <>Langkah Mudah<br />Menjadi Bagian dari Kami</>}
+            {cms?.title || ''}
           </h2>
           <p className="text-[15px] sm:text-[16px] text-white/70 leading-[1.6] max-w-lg">
-            {cms?.description || 'Empat tahapan transparan dan berkepastian hukum untuk menjadi pemegang unit equity resmi ekosistem Nuzultrip.'}
+            {cms?.description || ''}
           </p>
         </div>
 
