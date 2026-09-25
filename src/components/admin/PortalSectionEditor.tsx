@@ -29,10 +29,29 @@ export function PortalSectionEditor(){
    setMsg(`Asset berhasil diupload. Field ${key} sudah diisi; Simpan Draft lalu Publish untuk menerapkannya ke portal.`);
   }catch(e){setMsg(e instanceof Error?e.message:'Upload asset gagal')}finally{setUploading(false)}
  };
+ const uploadGallery=async(files:FileList)=>{
+  if(!supabase||!selected||!files.length)return;
+  setUploading(true);setMsg('');
+  try{
+   let content:any;try{content=JSON.parse(text)}catch{throw new Error('Content JSON section tidak valid.')}
+   const urls:string[]=[];
+   for(const file of Array.from(files).slice(0,5)){
+    if(!['image/png','image/jpeg','image/webp','image/svg+xml'].includes(file.type))throw new Error('Semua gambar galeri wajib PNG, JPG, WEBP, atau SVG.');
+    if(file.size>5*1024*1024)throw new Error('Ukuran setiap gambar maksimal 5 MB.');
+    const{data:user}=await supabase.auth.getUser();if(!user.user)throw new Error('Sesi admin tidak valid.');
+    const safe=file.name.replace(/[^a-zA-Z0-9._-]/g,'-'),storagePath=`portal-assets/${crypto.randomUUID()}-${safe}`;
+    const up=await supabase.storage.from('company-documents').upload(storagePath,file,{contentType:file.type,upsert:false});if(up.error)throw up.error;
+    const asset=await supabase.from('media_assets').insert({bucket:'company-documents',path:storagePath,original_filename:file.name,mime_type:file.type,byte_size:file.size,visibility:'public',uploaded_by:user.user.id,finalized_at:new Date().toISOString()}).select('id').single();
+    if(asset.error){await supabase.storage.from('company-documents').remove([storagePath]);throw asset.error}
+    urls.push(supabase.storage.from('company-documents').getPublicUrl(storagePath).data.publicUrl);
+   }
+   content.images=urls;setText(JSON.stringify(content,null,2));setMsg('Galeri berhasil diupload. Simpan Draft lalu Publish untuk menerapkannya ke portal.');
+  }catch(e){setMsg(e instanceof Error?e.message:'Upload galeri gagal')}finally{setUploading(false)}
+ };
  const move=async(target:'draft'|'review'|'approved'|'published')=>{if(!selected)return;setBusy(true);try{await transitionSection(selected.id,target);setMsg('Status section diperbarui.');await refresh()}catch(e){setMsg(e instanceof Error?e.message:'Transisi gagal')}finally{setBusy(false)}};
  return <div className="grid lg:grid-cols-[280px_1fr] gap-5">
   <div className="bg-white rounded-3xl border p-3 h-fit"><div className="flex justify-between p-2"><b className="text-sm">Semua Section Portal</b><button onClick={()=>void refresh()}><RefreshCw size={14}/></button></div>{rows.map(r=><button key={r.id} onClick={()=>choose(r)} className={`w-full text-left p-3 rounded-xl mb-1 ${selected?.id===r.id?'bg-slate-900 text-white':'hover:bg-slate-50'}`}><div className="text-xs font-bold">{r.anchor_id||r.section_kind}</div><div className="text-[10px] opacity-60">{r.section_kind} · {r.status}</div></button>)}</div>
-  <div className="bg-white rounded-3xl border p-6">{!selected?<p className="text-sm text-slate-500">Pilih section yang ingin diedit.</p>:<div className="space-y-4"><div><h3 className="font-black">{selected.anchor_id}</h3><p className="text-xs text-slate-500">Layout/komponen portal tidak diubah. Editor ini hanya mengubah content payload section yang sudah ada.</p></div>{msg&&<div className="p-3 rounded-xl bg-slate-50 border text-xs font-semibold">{msg}</div>}{selected.anchor_id==='beranda'?<div className="grid sm:grid-cols-2 gap-3">{[
+  <div className="bg-white rounded-3xl border p-6">{!selected?<p className="text-sm text-slate-500">Pilih section yang ingin diedit.</p>:<div className="space-y-4"><div><h3 className="font-black">{selected.anchor_id}</h3><p className="text-xs text-slate-500">Layout/komponen portal tidak diubah. Editor ini hanya mengubah content payload section yang sudah ada.</p></div>{msg&&<div className="p-3 rounded-xl bg-slate-50 border text-xs font-semibold">{msg}</div>}{selected.anchor_id==='bisnis'?<div className="rounded-2xl border border-dashed p-4 bg-slate-50"><div className="flex items-center justify-between gap-3"><div><div className="text-xs font-black">Galeri Perusahaan</div><p className="text-[11px] text-slate-500 mt-1">Upload sampai 5 gambar untuk slideshow section Perusahaan.</p></div><label className={`px-3 py-2 rounded-xl bg-white border text-xs font-bold flex items-center gap-2 cursor-pointer ${uploading?'opacity-50 pointer-events-none':''}`}><ImagePlus size={14}/>{uploading?'Mengunggah...':'Upload Galeri'}<input type="file" multiple accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden" disabled={uploading} onChange={e=>{if(e.target.files?.length)void uploadGallery(e.target.files);e.currentTarget.value=''}}/></label></div></div>:selected.anchor_id==='beranda'?<div className="grid sm:grid-cols-2 gap-3">{[
  ['logo_url','Logo Header','Logo utama pada bagian atas portal'],
  ['footer_logo_url','Logo Footer','Logo khusus footer; kosong berarti memakai logo header'],
  ['favicon_url','Favicon / Icon Browser','Icon kecil pada tab browser'],
