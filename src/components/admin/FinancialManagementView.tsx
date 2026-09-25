@@ -34,6 +34,7 @@ type ReportVersion = {
   financial_report_id: string;
   status: string;
   structured_content: Record<string, string> | null;
+  document_asset_id: string | null;
 };
 
 type LineItem = {
@@ -73,6 +74,7 @@ export const FinancialManagementView: React.FC<FinancialManagementViewProps> = (
   const [versions, setVersions] = useState<ReportVersion[]>([]);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [kpis, setKpis] = useState<Kpi[]>([]);
+  const [publishedDocumentAssetIds, setPublishedDocumentAssetIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -90,14 +92,15 @@ export const FinancialManagementView: React.FC<FinancialManagementViewProps> = (
     }
     setLoading(true);
     setError(null);
-    const [periodResult, reportResult, versionResult, itemResult, kpiResult] = await Promise.all([
+    const [periodResult, reportResult, versionResult, itemResult, kpiResult, documentResult] = await Promise.all([
       supabase.from('financial_periods').select('id,period_type,fiscal_year,period_index,starts_on,ends_on,status').order('starts_on', { ascending: false }),
       supabase.from('financial_reports').select('id,financial_period_id,title,summary,status,visibility,current_version_id,published_version_id,updated_at').order('updated_at', { ascending: false }),
-      supabase.from('financial_report_versions').select('id,financial_report_id,status,structured_content'),
+      supabase.from('financial_report_versions').select('id,financial_report_id,status,structured_content,document_asset_id'),
       supabase.from('financial_line_items').select('id,financial_report_version_id,statement,category,line_key,label,amount,currency,position,note').order('position'),
       supabase.from('financial_kpis').select('id,financial_report_version_id,kpi_key,label,value,unit,basis,position').order('position'),
+      supabase.from('documents').select('published_version:document_versions!documents_published_version_id_fkey(file_asset_id)').eq('visibility','public').eq('status','published').eq('kind','investor_report'),
     ]);
-    const firstError = periodResult.error || reportResult.error || versionResult.error || itemResult.error || kpiResult.error;
+    const firstError = periodResult.error || reportResult.error || versionResult.error || itemResult.error || kpiResult.error || documentResult.error;
     if (firstError) {
       setError(firstError.message);
     } else {
@@ -106,6 +109,7 @@ export const FinancialManagementView: React.FC<FinancialManagementViewProps> = (
       setVersions((versionResult.data || []) as ReportVersion[]);
       setLineItems((itemResult.data || []).map((x: any) => ({ ...x, amount: Number(x.amount || 0) })) as LineItem[]);
       setKpis((kpiResult.data || []).map((x: any) => ({ ...x, value: Number(x.value || 0) })) as Kpi[]);
+      setPublishedDocumentAssetIds(new Set((documentResult.data || []).map((d: any) => d.published_version?.file_asset_id).filter(Boolean)));
     }
     setLoading(false);
   };
@@ -156,6 +160,8 @@ export const FinancialManagementView: React.FC<FinancialManagementViewProps> = (
       ['approval', 'Pengesahan Laporan'],
     ].map(([key, label]) => ({ key, label, complete: Boolean(String(content[key] || '').trim()) }));
   }, [currentVersion]);
+
+  const officialPdfPublished = Boolean(currentVersion?.document_asset_id && publishedDocumentAssetIds.has(currentVersion.document_asset_id));
 
   const balanceCheck = useMemo(() => {
     const balanceItems = currentItems.filter((item) => item.statement === 'balance');
@@ -301,6 +307,10 @@ export const FinancialManagementView: React.FC<FinancialManagementViewProps> = (
 
   const transitionReport = async (target: 'review' | 'approved' | 'published') => {
     if (!supabase || !currentReport) return;
+    if (target === 'published' && !officialPdfPublished) {
+      setMessage('Laporan belum dapat dipublikasikan: PDF resmi yang terhubung harus sudah Published melalui workflow Dokumen Portal.');
+      return;
+    }
     if (target === 'review' && (!tocSections.every((x) => x.complete) || !balanceCheck.balanced || !currentItems.some((x) => x.statement === 'income') || !currentItems.some((x) => x.statement === 'cash_flow'))) {
       setMessage('Laporan belum siap direview: seluruh daftar isi wajib lengkap, neraca harus seimbang, serta Laba Rugi dan Arus Kas harus memiliki line item.');
       return;
@@ -411,7 +421,8 @@ export const FinancialManagementView: React.FC<FinancialManagementViewProps> = (
                     <div className="text-xs font-black text-slate-900">Workflow Laporan Resmi</div>
                     <p className="text-xs text-slate-500 mt-1">Draft → Review → Approved → Published. Transisi tetap diverifikasi oleh permission dan RPC production.</p>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={`px-3 py-2 rounded-xl text-xs font-bold ${officialPdfPublished?'bg-emerald-50 text-emerald-700':'bg-amber-50 text-amber-700'}`}>{officialPdfPublished?'PDF resmi Published':'PDF resmi belum Published'}</span>
                     <button type="button" onClick={printOfficialReport} className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-bold">Cetak / Simpan PDF</button>
                     <label className={`px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-bold cursor-pointer ${uploadingPdf?'opacity-50 pointer-events-none':''}`}>
                       {uploadingPdf ? 'Mengunggah PDF...' : 'Daftarkan PDF ke Dokumen Portal'}
@@ -419,7 +430,7 @@ export const FinancialManagementView: React.FC<FinancialManagementViewProps> = (
                     </label>
                     {currentReport.status === 'draft' && <button type="button" disabled={transitioning} onClick={()=>void transitionReport('review')} className="px-3 py-2 rounded-xl bg-amber-500 text-white text-xs font-bold disabled:opacity-50">Kirim ke Review</button>}
                     {currentReport.status === 'review' && <button type="button" disabled={transitioning} onClick={()=>void transitionReport('approved')} className="px-3 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold disabled:opacity-50">Setujui Laporan</button>}
-                    {currentReport.status === 'approved' && <button type="button" disabled={transitioning} onClick={()=>void transitionReport('published')} className="px-3 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold disabled:opacity-50">Publish ke Investor</button>}
+                    {currentReport.status === 'approved' && <button type="button" disabled={transitioning || !officialPdfPublished} onClick={()=>void transitionReport('published')} className="px-3 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold disabled:opacity-50">Publish ke Investor</button>}
                     {currentReport.status === 'published' && <span className="px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold">✓ Published</span>}
                   </div>
                 </div>
