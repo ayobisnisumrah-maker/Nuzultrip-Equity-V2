@@ -113,10 +113,10 @@ export default function App() {
     const detail=payload?.detail||payload?.modal||payload||{};
     setDetailModal({isOpen:true,title:String(detail.title||fallbackTitle||''),category:String(detail.category||''),content:String(detail.content||detail.description||(typeof detail.details==='string'?detail.details:'')||''),detailsList:Array.isArray(detail.detailsList)?detail.detailsList:Array.isArray(detail.details)?detail.details:[]});
   };
-  const handleOpenEquityDetail=()=>openCmsDetail('Detail Penawaran Equity',publicSections.find(s=>s.anchorId==='ringkasan')?.content);
-  const handleOpenCompanyDetail=()=>openCmsDetail('Detail Perusahaan',publicSections.find(s=>s.anchorId==='bisnis')?.content);
-  const handleOpenProcessDetail=()=>openCmsDetail('Detail Proses',publicSections.find(s=>s.anchorId==='governance')?.content);
-  const handleOpenNetworkDetail=()=>openCmsDetail('Detail Jaringan',publicSections.find(s=>s.anchorId==='logo-jaringan')?.content);
+  const handleOpenEquityDetail=()=>openCmsDetail('',publicSections.find(s=>s.anchorId==='ringkasan')?.content);
+  const handleOpenCompanyDetail=()=>openCmsDetail('',publicSections.find(s=>s.anchorId==='bisnis')?.content);
+  const handleOpenProcessDetail=()=>openCmsDetail('',publicSections.find(s=>s.anchorId==='governance')?.content);
+  const handleOpenNetworkDetail=()=>openCmsDetail('',publicSections.find(s=>s.anchorId==='logo-jaringan')?.content);
   const handleOpenServiceDetail=(service:ServiceItem)=>openCmsDetail(service.title,service);
   const handleOpenInvestorInfo=(item:InvestorInfoItem)=>openCmsDetail(item.title,item);
   const handleOpenArticle=(article:ArticleItem)=>openCmsDetail(article.title,article);
