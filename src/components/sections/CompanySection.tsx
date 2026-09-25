@@ -3,8 +3,8 @@ import { Container } from '../layout/Container';
 import { Eyebrow } from '../ui/Eyebrow';
 import { ArrowButton } from '../ui/ArrowButton';
 import { AnimatedNumber } from '../ui/AnimatedNumber';
-import { loadPublicHome } from '../../services/publicPortalService';
-import { supabase } from '../../lib/supabase';
+import { StaggerHeading } from '../ui/LetterStagger';
+import { COMPANY_METRICS, IMAGES } from '../../data/landingData';
 
 interface CompanySectionProps {
   onOpenDetail: () => void;
@@ -12,20 +12,15 @@ interface CompanySectionProps {
 
 export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [cms, setCms] = useState<any>(null);
-  const companyImages = Array.isArray(cms?.images) ? cms.images : cms?.image_url ? [cms.image_url] : [];
-  const companyMetrics:any[] = Array.isArray(cms?.metrics) ? cms.metrics : [];
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(()=>{let active=true;const sync=async()=>{try{const sections=await loadPublicHome();if(active)setCms(sections.find((s)=>s.anchorId==='bisnis')?.content||null)}catch{}};void sync();const channel=supabase?.channel('public-company-cms').on('postgres_changes',{event:'*',schema:'public',table:'portal_sections'},()=>void sync()).on('postgres_changes',{event:'*',schema:'public',table:'portal_section_versions'},()=>void sync()).subscribe();return()=>{active=false;if(channel&&supabase)void supabase.removeChannel(channel)}},[]);
-
-  // Preload published CMS images or current fallback images
+  // Preload all 5 images on mount
   useEffect(() => {
-    companyImages.forEach((url:string) => {
+    IMAGES.companySlices.forEach((url) => {
       const img = new Image();
       img.src = url;
     });
-  }, [companyImages.join('|')]);
+  }, []);
 
   // Automatic slideshow for mobile or when not hovered
   useEffect(() => {
@@ -33,15 +28,13 @@ export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) 
     if (!isTouch) return;
 
     const interval = setInterval(() => {
-      if(companyImages.length)setActiveImageIndex((prev) => (prev + 1) % companyImages.length);
+      setActiveImageIndex((prev) => (prev + 1) % IMAGES.companySlices.length);
     }, 3200);
 
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(()=>{if(activeImageIndex>=companyImages.length)setActiveImageIndex(0)},[companyImages.length,activeImageIndex]);
-
-  // Mouse move handler follows the number of published gallery images
+  // Mouse move handler for 5 horizontal segment divisions
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!imageContainerRef.current) return;
     const rect = imageContainerRef.current.getBoundingClientRect();
@@ -49,8 +42,8 @@ export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) 
     const width = rect.width;
     const ratio = Math.max(0, Math.min(1, x / width));
 
-    const count=Math.max(companyImages.length,1);
-    const index = Math.min(Math.floor(ratio * count), count-1);
+    // Divide 0..1 into 5 parts
+    const index = Math.min(Math.floor(ratio * 5), 4);
     if (index !== activeImageIndex) {
       setActiveImageIndex(index);
     }
@@ -63,19 +56,26 @@ export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) 
   return (
     <section
       id="perusahaan"
-      className="py-16 sm:py-24 lg:py-32 border-t border-black/[0.06]"
+      className="py-16 sm:py-24 lg:py-28 border-t border-black/[0.08]"
     >
       <Container size="default">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 items-stretch">
           {/* Column 1: Left Description & CTA */}
           <div className="lg:col-span-4 flex flex-col justify-between h-full">
             <div>
-              <Eyebrow>{cms?.eyebrow || ''}</Eyebrow>
-              <h2 className="font-h2 font-bold text-[#111111] leading-[1.05] tracking-tight mb-5 sm:mb-6">
-                {cms?.title || ''}
-              </h2>
+              <Eyebrow>PERUSAHAAN</Eyebrow>
+              <div className="mb-5 sm:mb-6">
+                <StaggerHeading
+                  as="h2"
+                  text="Perjalanan Muslim yang Bertumbuh"
+                  className="font-h2 font-bold text-[#111111] leading-[1.08] tracking-tight"
+                  highlightWord="Bertumbuh"
+                  highlightClass="text-emerald-600"
+                />
+              </div>
               <p className="text-[16px] sm:text-[17px] text-[#555555] leading-[1.65] max-w-[360px]">
-                {cms?.description || ''}
+                Menghadirkan layanan perjalanan ibadah yang bermakna melalui layanan,
+                jaringan, dan teknologi.
               </p>
             </div>
 
@@ -86,7 +86,7 @@ export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) 
                 onClick={onOpenDetail}
                 id="company-cta-detail"
               >
-                {cms?.cta_label || ''}
+                Lebih Detail Penawaran
               </ArrowButton>
             </div>
           </div>
@@ -99,7 +99,7 @@ export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) 
               onMouseLeave={handleMouseLeave}
               className="relative w-full h-[320px] sm:h-[400px] lg:h-[440px] rounded-2xl overflow-hidden border border-black/[0.1] bg-[#E8E8E4] shadow-sm cursor-crosshair group select-none"
             >
-              {companyImages.map((url:string, idx:number) => (
+              {IMAGES.companySlices.map((url, idx) => (
                 <div
                   key={url}
                   className={`absolute inset-0 transition-opacity duration-300 ease-out ${
@@ -108,7 +108,7 @@ export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) 
                 >
                   <img
                     src={url}
-                    alt={cms?.image_alt ? `${cms.image_alt} #${idx+1}` : ''}
+                    alt={`Galeri perjalanan Nuzultrip #${idx + 1}`}
                     className="w-full h-full object-cover object-center"
                     loading="lazy"
                   />
@@ -119,7 +119,7 @@ export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) 
               {/* Clean pure visual image card without text overlay */}
               {/* Indicator bar showing active 1 of 5 */}
               <div className="absolute bottom-4 inset-x-6 z-10 flex items-center justify-center gap-1.5 pointer-events-none">
-                {companyImages.map((_:string,i:number) => (
+                {[0, 1, 2, 3, 4].map((i) => (
                   <div
                     key={i}
                     className={`h-1 rounded-full transition-all duration-300 ${
@@ -134,7 +134,7 @@ export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) 
           {/* Column 3: 5 Poin Metrik & Kredensial Disusun Vertikal */}
           <div className="lg:col-span-4 flex flex-col justify-between py-1 h-full">
             <div className="flex flex-col justify-between h-full gap-y-3 sm:gap-y-3.5">
-              {companyMetrics.map((item:any, idx:number) => {
+              {COMPANY_METRICS.map((item, idx) => {
                 const isActive = activeImageIndex === idx;
                 return (
                   <div
@@ -177,10 +177,10 @@ export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) 
 
               {/* Point 5: Headline Amanah dengan deskripsi Terverifikasi PPIU Kemenag */}
               <div
-                onMouseEnter={() => setActiveImageIndex(Math.max(companyImages.length-1,0))}
-                onClick={() => setActiveImageIndex(Math.max(companyImages.length-1,0))}
+                onMouseEnter={() => setActiveImageIndex(4)}
+                onClick={() => setActiveImageIndex(4)}
                 className={`pb-2.5 sm:pb-3 border-b transition-all duration-200 cursor-pointer flex flex-col group ${
-                  activeImageIndex === Math.max(companyImages.length-1,0)
+                  activeImageIndex === 4
                     ? 'border-black/50 pl-2'
                     : 'border-black/[0.08] hover:border-black/30 hover:pl-1'
                 }`}
@@ -188,25 +188,25 @@ export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) 
                 <div className="flex items-center justify-between">
                   <div
                     className={`text-[26px] sm:text-[30px] font-extrabold tracking-tight leading-none transition-colors duration-200 ${
-                      activeImageIndex === Math.max(companyImages.length-1,0)
+                      activeImageIndex === 4
                         ? 'text-[#000000]'
                         : 'text-[#111111] group-hover:text-black'
                     }`}
                   >
-                    {cms?.credential_title || ''}
+                    Amanah
                   </div>
-                  {activeImageIndex === Math.max(companyImages.length-1,0) && (
+                  {activeImageIndex === 4 && (
                     <span className="w-1.5 h-1.5 rounded-full bg-[#111111] animate-pulse" />
                   )}
                 </div>
                 <p
                   className={`text-[13px] sm:text-[14px] font-medium leading-snug mt-1.5 transition-colors duration-200 ${
-                    activeImageIndex === Math.max(companyImages.length-1,0)
+                    activeImageIndex === 4
                       ? 'text-[#111111]'
                       : 'text-[#666666] group-hover:text-[#333333]'
                   }`}
                 >
-                  {cms?.credential_description || ''}
+                  Terverifikasi PPIU Kemenag
                 </p>
               </div>
             </div>

@@ -1,29 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Container } from '../layout/Container';
 import { Eyebrow } from '../ui/Eyebrow';
 import { AnimatedNumber } from '../ui/AnimatedNumber';
-import { loadPublicHome } from '../../services/publicPortalService';
-import { supabase } from '../../lib/supabase';
+import { StaggerHeading } from '../ui/LetterStagger';
+import { ABOUT_METRICS } from '../../data/landingData';
 
 export const AboutSection: React.FC = () => {
-  const [cmsIntro, setCmsIntro] = useState<any>(null);
-  const [cmsMetrics, setCmsMetrics] = useState<any[] | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    const syncCms = async () => {
-      try {
-        const sections = await loadPublicHome();
-        if (!active) return;
-        setCmsIntro(sections.find((s) => s.anchorId === 'tentang-nuzultrip')?.content || null);
-        setCmsMetrics(sections.find((s) => s.anchorId === 'statistik-utama')?.content?.metrics || null);
-      } catch { /* keep current published UI fallback */ }
-    };
-    void syncCms();
-    const channel=supabase?.channel('public-about-cms').on('postgres_changes',{event:'*',schema:'public',table:'portal_sections'},()=>void syncCms()).on('postgres_changes',{event:'*',schema:'public',table:'portal_section_versions'},()=>void syncCms()).subscribe();
-    return () => { active = false; if(channel&&supabase)void supabase.removeChannel(channel); };
-  }, []);
-
   return (
     <section
       id="tentang"
@@ -32,21 +14,22 @@ export const AboutSection: React.FC = () => {
       <Container size="default">
         {/* Header - Eyebrow & Headline 2 Baris Rata Tengah */}
         <div className="text-center max-w-[860px] mx-auto mb-12 sm:mb-16 flex flex-col items-center">
-          <Eyebrow>{cmsIntro?.eyebrow || ''}</Eyebrow>
-          <h2 className="font-h2 font-bold text-[#111111] leading-[1.18] tracking-tight max-w-[820px] text-center">
-            {cmsIntro?.title || ''}
-          </h2>
-          {cmsIntro?.description && (
-            <p className="mt-4 text-[15px] sm:text-[16px] text-[#555555] max-w-2xl text-center leading-relaxed">
-              {cmsIntro?.description || ''}
-            </p>
-          )}
+          <Eyebrow>TENTANG KAMI</Eyebrow>
+          <div className="max-w-[820px] text-center">
+            <StaggerHeading
+              as="h2"
+              text="Menghadirkan Inovasi Teknologi dengan Integrasi Berkelanjutan"
+              className="font-h2 font-bold text-[#111111] leading-[1.18] tracking-tight justify-center text-center"
+              highlightWord="Berkelanjutan"
+              highlightClass="text-emerald-600"
+            />
+          </div>
         </div>
 
         {/* Outline Grid System - Semua tulisan rata tengah, garis pemisah sejajar */}
         <div className="border border-black/[0.14] rounded-2xl overflow-hidden bg-white/50 backdrop-blur-xs shadow-xs">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 divide-y sm:divide-y-0 lg:divide-x divide-black/[0.12]">
-            {(Array.isArray(cmsMetrics) ? cmsMetrics.map((m:any,i:number)=>({id:`cms-${i}`,value:Number(String(m.value||'0').replace(/[^0-9.,]/g,'').replace(',','.'))||0,prefix:String(m.value||'').trim().startsWith('Rp')?'Rp ':'',suffix:String(m.value||'').replace(/[0-9.,]/g,'').replace(/^Rp\s*/,'').trim()?` ${String(m.value).replace(/[0-9.,]/g,'').replace(/^Rp\s*/,'').trim()}`:'',label:m.label,description:m.description,customDisplay:m.value})) : []).map((item:any, index:number) => (
+            {ABOUT_METRICS.map((item, index) => (
               <div
                 key={item.id}
                 className={`p-6 sm:p-7 flex flex-col justify-between items-center text-center transition-colors duration-200 hover:bg-black/[0.03] group ${
@@ -59,7 +42,7 @@ export const AboutSection: React.FC = () => {
                 {/* Top Stat Value Section - Tinggi seragam agar garis pemisah tepat sejajar dari metrik 1 hingga 5 */}
                 <div className="w-full flex flex-col items-center justify-end h-[96px] sm:h-[105px] pb-3">
                   <div className="text-[10px] font-bold text-[#8A8A8A] uppercase tracking-[0.16em] mb-2 text-center">
-                    {cmsIntro?.metric_label_prefix || ''} 0{index + 1}
+                    Metrik 0{index + 1}
                   </div>
                   <div className="font-stat-large text-[#111111] font-extrabold tracking-tight text-center group-hover:scale-105 transition-transform duration-200">
                     <AnimatedNumber
