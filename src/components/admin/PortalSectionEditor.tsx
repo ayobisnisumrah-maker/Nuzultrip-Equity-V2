@@ -1,16 +1,37 @@
 import React,{useEffect,useState}from'react';
-import{CheckCircle2,RefreshCw,Save}from'lucide-react';
+import{CheckCircle2,ImagePlus,RefreshCw,Save}from'lucide-react';
+import{supabase}from'../../lib/supabase';
 import{loadAdminHomeSections,saveSectionDraft,transitionSection}from'../../services/publicPortalService';
 type Row={id:string;anchor_id:string;section_kind:string;status:string;is_visible:boolean;current_version?:{content:any;version_number:number}};
 export function PortalSectionEditor(){
- const[rows,setRows]=useState<Row[]>([]),[selected,setSelected]=useState<Row|null>(null),[text,setText]=useState(''),[busy,setBusy]=useState(false),[msg,setMsg]=useState('');
+ const[rows,setRows]=useState<Row[]>([]),[selected,setSelected]=useState<Row|null>(null),[text,setText]=useState(''),[busy,setBusy]=useState(false),[msg,setMsg]=useState(''),[uploading,setUploading]=useState(false);
  const refresh=async()=>{const x=await loadAdminHomeSections() as Row[];setRows(x);if(selected){const n=x.find(v=>v.id===selected.id);if(n){setSelected(n);setText(JSON.stringify(n.current_version?.content||{},null,2))}}};
  useEffect(()=>{void refresh()},[]);
  const choose=(r:Row)=>{setSelected(r);setText(JSON.stringify(r.current_version?.content||{},null,2));setMsg('')};
  const save=async()=>{if(!selected)return;setBusy(true);try{const content=JSON.parse(text);await saveSectionDraft(selected.anchor_id,content);setMsg('Draft tersimpan. Tampilan portal belum berubah sampai dipublikasikan.');await refresh()}catch(e){setMsg(e instanceof Error?e.message:'Gagal menyimpan')}finally{setBusy(false)}};
+ const uploadAsset=async(file:File)=>{
+  if(!supabase||!selected)return;
+  if(!['image/png','image/jpeg','image/webp','image/svg+xml'].includes(file.type)){setMsg('Logo/gambar wajib PNG, JPG, WEBP, atau SVG.');return}
+  if(file.size>5*1024*1024){setMsg('Ukuran logo/gambar maksimal 5 MB.');return}
+  setUploading(true);setMsg('');
+  try{
+   const{data:user}=await supabase.auth.getUser();if(!user.user)throw new Error('Sesi admin tidak valid.');
+   const safe=file.name.replace(/[^a-zA-Z0-9._-]/g,'-');
+   const storagePath=`portal-assets/${crypto.randomUUID()}-${safe}`;
+   const up=await supabase.storage.from('company-documents').upload(storagePath,file,{contentType:file.type,upsert:false});if(up.error)throw up.error;
+   const asset=await supabase.from('media_assets').insert({bucket:'company-documents',path:storagePath,original_filename:file.name,mime_type:file.type,byte_size:file.size,visibility:'public',uploaded_by:user.user.id,finalized_at:new Date().toISOString()}).select('id').single();
+   if(asset.error){await supabase.storage.from('company-documents').remove([storagePath]);throw asset.error}
+   const{data:urlData}=supabase.storage.from('company-documents').getPublicUrl(storagePath);
+   let content:any;try{content=JSON.parse(text)}catch{throw new Error('Content JSON section tidak valid.')}
+   const key=selected.anchor_id==='beranda'?'logo_url':'image_url';
+   content[key]=urlData.publicUrl;
+   setText(JSON.stringify(content,null,2));
+   setMsg(`Asset berhasil diupload. Field ${key} sudah diisi; Simpan Draft lalu Publish untuk menerapkannya ke portal.`);
+  }catch(e){setMsg(e instanceof Error?e.message:'Upload asset gagal')}finally{setUploading(false)}
+ };
  const move=async(target:'draft'|'review'|'approved'|'published')=>{if(!selected)return;setBusy(true);try{await transitionSection(selected.id,target);setMsg('Status section diperbarui.');await refresh()}catch(e){setMsg(e instanceof Error?e.message:'Transisi gagal')}finally{setBusy(false)}};
  return <div className="grid lg:grid-cols-[280px_1fr] gap-5">
   <div className="bg-white rounded-3xl border p-3 h-fit"><div className="flex justify-between p-2"><b className="text-sm">Semua Section Portal</b><button onClick={()=>void refresh()}><RefreshCw size={14}/></button></div>{rows.map(r=><button key={r.id} onClick={()=>choose(r)} className={`w-full text-left p-3 rounded-xl mb-1 ${selected?.id===r.id?'bg-slate-900 text-white':'hover:bg-slate-50'}`}><div className="text-xs font-bold">{r.anchor_id||r.section_kind}</div><div className="text-[10px] opacity-60">{r.section_kind} · {r.status}</div></button>)}</div>
-  <div className="bg-white rounded-3xl border p-6">{!selected?<p className="text-sm text-slate-500">Pilih section yang ingin diedit.</p>:<div className="space-y-4"><div><h3 className="font-black">{selected.anchor_id}</h3><p className="text-xs text-slate-500">Layout/komponen portal tidak diubah. Editor ini hanya mengubah content payload section yang sudah ada.</p></div>{msg&&<div className="p-3 rounded-xl bg-slate-50 border text-xs font-semibold">{msg}</div>}<textarea value={text} onChange={e=>setText(e.target.value)} spellCheck={false} className="w-full min-h-[440px] rounded-2xl border p-4 font-mono text-xs"/><div className="flex flex-wrap gap-2"><button disabled={busy} onClick={save} className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold flex gap-2"><Save size={13}/>Simpan Draft</button>{selected.status==='draft'&&<button onClick={()=>move('review')} className="px-4 py-2 rounded-xl border text-xs font-bold">Kirim Review</button>}{selected.status==='review'&&<><button onClick={()=>move('approved')} className="px-4 py-2 rounded-xl border text-xs font-bold">Approve</button><button onClick={()=>move('draft')} className="px-4 py-2 rounded-xl border text-xs font-bold">Kembalikan</button></>}{selected.status==='approved'&&<button onClick={()=>move('published')} className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold flex gap-2"><CheckCircle2 size={13}/>Publish</button>}</div></div>}</div>
+  <div className="bg-white rounded-3xl border p-6">{!selected?<p className="text-sm text-slate-500">Pilih section yang ingin diedit.</p>:<div className="space-y-4"><div><h3 className="font-black">{selected.anchor_id}</h3><p className="text-xs text-slate-500">Layout/komponen portal tidak diubah. Editor ini hanya mengubah content payload section yang sudah ada.</p></div>{msg&&<div className="p-3 rounded-xl bg-slate-50 border text-xs font-semibold">{msg}</div>}<div className="rounded-2xl border border-dashed p-4 bg-slate-50"><div className="flex items-center justify-between gap-3"><div><div className="text-xs font-black">Logo & Gambar Portal</div><p className="text-[11px] text-slate-500 mt-1">Upload asset untuk section ini. Untuk Beranda, asset otomatis masuk ke field logo_url agar dapat dipakai logo header/atas portal.</p></div><label className={`px-3 py-2 rounded-xl bg-white border text-xs font-bold flex items-center gap-2 cursor-pointer ${uploading?'opacity-50 pointer-events-none':''}`}><ImagePlus size={14}/>{uploading?'Mengunggah...':'Upload Logo/Gambar'}<input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden" disabled={uploading} onChange={e=>{const file=e.target.files?.[0];if(file)void uploadAsset(file);e.currentTarget.value=''}}/></label></div></div><textarea value={text} onChange={e=>setText(e.target.value)} spellCheck={false} className="w-full min-h-[440px] rounded-2xl border p-4 font-mono text-xs"/><div className="flex flex-wrap gap-2"><button disabled={busy} onClick={save} className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold flex gap-2"><Save size={13}/>Simpan Draft</button>{selected.status==='draft'&&<button onClick={()=>move('review')} className="px-4 py-2 rounded-xl border text-xs font-bold">Kirim Review</button>}{selected.status==='review'&&<><button onClick={()=>move('approved')} className="px-4 py-2 rounded-xl border text-xs font-bold">Approve</button><button onClick={()=>move('draft')} className="px-4 py-2 rounded-xl border text-xs font-bold">Kembalikan</button></>}{selected.status==='approved'&&<button onClick={()=>move('published')} className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold flex gap-2"><CheckCircle2 size={13}/>Publish</button>}</div></div>}</div>
  </div>
 }
