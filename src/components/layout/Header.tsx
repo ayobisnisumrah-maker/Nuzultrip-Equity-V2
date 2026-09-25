@@ -118,7 +118,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className="inline-flex items-center gap-2 px-4 py-1.5 sm:py-2 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-300 text-[13px] sm:text-[13.5px] font-semibold transition-all duration-200 active:scale-98 shadow-xs group cursor-pointer backdrop-blur-sm"
               >
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>{cms?.dashboard_label || 'Dashboard Investor'}</span>
+                <span>{cms?.login_label || 'Masuk'}</span>
                 <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
               </button>
             ) : (
@@ -179,7 +179,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-[#0d151d] font-bold text-center flex items-center justify-center gap-2 active:scale-98 transition-all shadow-md cursor-pointer"
               >
                 <span className="w-2 h-2 rounded-full bg-[#0d151d] animate-ping" />
-                <span>Buka Dashboard Investor</span>
+                <span>{cms?.mobile_login_label || cms?.login_label || 'Masuk'}</span>
                 <ArrowRight size={16} />
               </button>
             ) : (
