@@ -111,7 +111,7 @@ export default function App() {
   // Detail modal content is supplied by published CMS payloads/items, never invented in App.
   const openCmsDetail=(fallbackTitle:string,payload:any)=>{
     const detail=payload?.detail||payload?.modal||payload||{};
-    setDetailModal({isOpen:true,title:String(detail.title||fallbackTitle||''),category:String(detail.category||''),content:String(detail.content||detail.description||''),detailsList:Array.isArray(detail.detailsList)?detail.detailsList:Array.isArray(detail.details)?detail.details:[]});
+    setDetailModal({isOpen:true,title:String(detail.title||fallbackTitle||''),category:String(detail.category||''),content:String(detail.content||detail.description||(typeof detail.details==='string'?detail.details:'')||''),detailsList:Array.isArray(detail.detailsList)?detail.detailsList:Array.isArray(detail.details)?detail.details:[]});
   };
   const handleOpenEquityDetail=()=>openCmsDetail('Detail Penawaran Equity',publicSections.find(s=>s.anchorId==='ringkasan')?.content);
   const handleOpenCompanyDetail=()=>openCmsDetail('Detail Perusahaan',publicSections.find(s=>s.anchorId==='bisnis')?.content);
