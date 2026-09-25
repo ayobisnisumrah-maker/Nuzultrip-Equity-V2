@@ -243,6 +243,28 @@ export const FinancialManagementView: React.FC<FinancialManagementViewProps> = (
     setSaving(false);
   };
 
+  const printOfficialReport = () => {
+    if (!currentReport || !currentVersion) return;
+    const period = periods.find((p) => p.id === currentReport.financial_period_id);
+    const content = currentVersion.structured_content || {};
+    const escapeHtml = (value: unknown) => String(value ?? '').replace(/[&<>"']/g, (ch) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch] || ch));
+    const sectionHtml = tocSections.map((section, index) => `
+      <section><h2>${index + 1}. ${escapeHtml(section.label)}</h2><p>${escapeHtml(content[section.key] || '').replace(/\n/g,'<br>')}</p></section>`).join('');
+    const rows = currentItems.map((item) => `<tr><td>${escapeHtml(item.line_key)}</td><td>${escapeHtml(item.label)}</td><td>${escapeHtml(item.statement)}</td><td class="num">${escapeHtml(formatRupiah(item.amount))}</td><td>${escapeHtml(item.note || '')}</td></tr>`).join('');
+    const win = window.open('', '_blank', 'noopener,noreferrer');
+    if (!win) { setMessage('Browser memblokir jendela cetak. Izinkan pop-up untuk membuat PDF.'); return; }
+    win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(currentReport.title)}</title><style>
+      @page{size:A4;margin:18mm 16mm} body{font-family:Arial,sans-serif;color:#111827;font-size:11px;line-height:1.55} h1{font-size:26px;margin:0 0 8px} h2{font-size:15px;margin:26px 0 8px;break-after:avoid} .cover{min-height:245mm;display:flex;flex-direction:column;justify-content:center;page-break-after:always}.muted{color:#64748b}.toc{page-break-after:always}.toc div{display:flex;justify-content:space-between;border-bottom:1px dotted #cbd5e1;padding:6px 0} table{width:100%;border-collapse:collapse;margin-top:10px}th,td{border-bottom:1px solid #e2e8f0;padding:6px;text-align:left;vertical-align:top}.num{text-align:right;white-space:nowrap}section{break-inside:avoid} .footer{margin-top:30px;color:#64748b;font-size:9px}
+    </style></head><body>
+      <div class="cover"><div class="muted">NUZULTRIP EQUITY</div><h1>${escapeHtml(currentReport.title)}</h1><p>${escapeHtml(currentReport.summary || '')}</p><p class="muted">Periode: ${escapeHtml(period ? `${formatDate(period.starts_on)} – ${formatDate(period.ends_on)}` : '-')}</p><p class="muted">Status: ${escapeHtml(currentReport.status.toUpperCase())}</p></div>
+      <div class="toc"><h1>Daftar Isi</h1>${tocSections.map((s,i)=>`<div><span>${i+1}. ${escapeHtml(s.label)}</span><span>${s.complete?'Lengkap':'Belum Lengkap'}</span></div>`).join('')}</div>
+      ${sectionHtml}
+      <section><h2>Lampiran — Line Item Laporan Keuangan</h2><table><thead><tr><th>Kode</th><th>Akun</th><th>Laporan</th><th>Nominal</th><th>Catatan/CALK</th></tr></thead><tbody>${rows}</tbody></table></section>
+      <div class="footer">Dokumen ini dihasilkan dari data laporan production. Gunakan dialog Print → Save as PDF untuk membuat berkas PDF resmi.</div>
+      <script>window.onload=()=>window.print()</script></body></html>`);
+    win.document.close();
+  };
+
   const transitionReport = async (target: 'review' | 'approved' | 'published') => {
     if (!supabase || !currentReport) return;
     if (target === 'review' && (!tocSections.every((x) => x.complete) || !balanceCheck.balanced || !currentItems.some((x) => x.statement === 'income') || !currentItems.some((x) => x.statement === 'cash_flow'))) {
@@ -356,6 +378,7 @@ export const FinancialManagementView: React.FC<FinancialManagementViewProps> = (
                     <p className="text-xs text-slate-500 mt-1">Draft → Review → Approved → Published. Transisi tetap diverifikasi oleh permission dan RPC production.</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
+                    <button type="button" onClick={printOfficialReport} className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-bold">Cetak / Simpan PDF</button>
                     {currentReport.status === 'draft' && <button type="button" disabled={transitioning} onClick={()=>void transitionReport('review')} className="px-3 py-2 rounded-xl bg-amber-500 text-white text-xs font-bold disabled:opacity-50">Kirim ke Review</button>}
                     {currentReport.status === 'review' && <button type="button" disabled={transitioning} onClick={()=>void transitionReport('approved')} className="px-3 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold disabled:opacity-50">Setujui Laporan</button>}
                     {currentReport.status === 'approved' && <button type="button" disabled={transitioning} onClick={()=>void transitionReport('published')} className="px-3 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold disabled:opacity-50">Publish ke Investor</button>}
