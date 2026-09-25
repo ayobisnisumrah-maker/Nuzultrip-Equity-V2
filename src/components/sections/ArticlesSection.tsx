@@ -3,7 +3,7 @@ import { ArrowRight } from 'lucide-react';
 import { Container } from '../layout/Container';
 import { Eyebrow } from '../ui/Eyebrow';
 import { ArrowButton } from '../ui/ArrowButton';
-import { ARTICLES_LIST, ArticleItem } from '../../data/landingData';
+import { ArticleItem } from '../../data/landingData';
 import { loadPublicHome } from '../../services/publicPortalService';
 import { supabase } from '../../lib/supabase';
 
@@ -14,7 +14,7 @@ interface ArticlesSectionProps {
 export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ onSelectArticle }) => {
   const[cms,setCms]=useState<any>(null);
   useEffect(()=>{let active=true;const sync=async()=>{try{const sections=await loadPublicHome();if(active)setCms(sections.find(s=>s.anchorId==='konten')?.content?.articles_section||null)}catch{}};void sync();const channel=supabase?.channel('public-articles-cms').on('postgres_changes',{event:'*',schema:'public',table:'portal_sections'},()=>void sync()).on('postgres_changes',{event:'*',schema:'public',table:'portal_section_versions'},()=>void sync()).subscribe();return()=>{active=false;if(channel&&supabase)void supabase.removeChannel(channel)}},[]);
-  const articles:ArticleItem[]=Array.isArray(cms?.items)&&cms.items.length?cms.items:ARTICLES_LIST;
+  const articles:ArticleItem[]=Array.isArray(cms?.items)?cms.items:[];
   return (
     <section
       id="artikel"
@@ -25,12 +25,12 @@ export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ onSelectArticl
           {/* Left Column: Title & CTA */}
           <div className="lg:col-span-4 flex flex-col justify-between h-full">
             <div>
-              <Eyebrow>{cms?.eyebrow || 'ARTIKEL & BERITA'}</Eyebrow>
+              <Eyebrow>{cms?.eyebrow || ''}</Eyebrow>
               <h2 className="font-h2 font-bold text-[#111111] leading-[1.05] tracking-tight mb-5 sm:mb-6">
-                {cms?.title || <>Wawasan untuk<br />Keputusan<br />yang Lebih Baik</>}
+                {cms?.title || ''}
               </h2>
               <p className="text-[16px] sm:text-[17px] text-[#555555] leading-[1.65] max-w-[360px]">
-                {cms?.description || 'Analisis pasar, panduan investasi syariah, dan pembaruan strategis industri perjalanan ibadah Indonesia.'}
+                {cms?.description || ''}
               </p>
             </div>
 
@@ -41,7 +41,7 @@ export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ onSelectArticl
                 onClick={() => articles[0] && onSelectArticle(articles[0])}
                 id="articles-cta-more"
               >
-                {cms?.more_label || 'Lebih Artikel Lainnya'}
+                {cms?.more_label || ''}
               </ArrowButton>
             </div>
           </div>
@@ -86,7 +86,7 @@ export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ onSelectArticl
                   </div>
 
                   <div className="mt-6 pt-4 border-t border-black/[0.06] flex items-center justify-between text-[13px] font-bold text-[#111111]">
-                    <span>{cms?.read_label || 'Baca Selengkapnya'}</span>
+                    <span>{cms?.read_label || ''}</span>
                     <ArrowRight
                       size={15}
                       className="group-hover:translate-x-1.5 transition-transform duration-200"
