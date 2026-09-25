@@ -22,10 +22,11 @@ export const Header: React.FC<HeaderProps> = ({
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [logoUrl, setLogoUrl] = useState('');
+  const [cms, setCms] = useState<any>(null);
 
   useEffect(() => {
     let active=true;
-    const syncLogo=async()=>{try{const sections=await loadPublicHome();const home=sections.find((s)=>s.anchorId==='beranda');if(active)setLogoUrl(String(home?.content?.logo_url||''))}catch{}};
+    const syncLogo=async()=>{try{const sections=await loadPublicHome();const home=sections.find((s)=>s.anchorId==='beranda');if(active){setLogoUrl(String(home?.content?.logo_url||''));setCms(home?.content||null)}}catch{}};
     void syncLogo();
     const channel=supabase?.channel('public-header-brand').on('postgres_changes',{event:'*',schema:'public',table:'portal_sections'},()=>void syncLogo()).on('postgres_changes',{event:'*',schema:'public',table:'portal_section_versions'},()=>void syncLogo()).subscribe();
     return()=>{active=false;if(channel&&supabase)void supabase.removeChannel(channel)};
@@ -56,14 +57,8 @@ export const Header: React.FC<HeaderProps> = ({
     };
   }, [mobileMenuOpen]);
 
-  const navLinks = [
-    { label: 'Tentang', href: '#tentang' },
-    { label: 'Peluang', href: '#peluang' },
-    { label: 'Proses', href: '#proses' },
-    { label: 'Roadmap', href: '#roadmap' },
-    { label: 'Jaringan', href: '#jaringan' },
-    { label: 'Informasi', href: '#informasi' },
-    { label: 'Kontak', href: '#kontak' },
+  const navLinks = Array.isArray(cms?.nav_links) && cms.nav_links.length ? cms.nav_links : [
+    { label: 'Tentang', href: '#tentang' },{ label: 'Peluang', href: '#peluang' },{ label: 'Proses', href: '#proses' },{ label: 'Roadmap', href: '#roadmap' },{ label: 'Jaringan', href: '#jaringan' },{ label: 'Informasi', href: '#informasi' },{ label: 'Kontak', href: '#kontak' },
   ];
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
@@ -123,7 +118,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className="inline-flex items-center gap-2 px-4 py-1.5 sm:py-2 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-300 text-[13px] sm:text-[13.5px] font-semibold transition-all duration-200 active:scale-98 shadow-xs group cursor-pointer backdrop-blur-sm"
               >
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>Dashboard Investor</span>
+                <span>{cms?.dashboard_label || 'Dashboard Investor'}</span>
                 <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
               </button>
             ) : (
@@ -133,7 +128,7 @@ export const Header: React.FC<HeaderProps> = ({
                 onClick={onOpenLogin}
                 className="inline-flex items-center gap-2 px-4 py-1.5 sm:py-2 rounded-full bg-white/10 hover:bg-white/15 border border-white/15 text-white text-[13px] sm:text-[13.5px] font-semibold transition-all duration-200 active:scale-98 shadow-xs group cursor-pointer backdrop-blur-sm"
               >
-                <span>Masuk</span>
+                <span>{cms?.login_label || 'Masuk'}</span>
                 <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
               </button>
             )}
@@ -197,7 +192,7 @@ export const Header: React.FC<HeaderProps> = ({
                   }}
                   className="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-[#0d151d] font-bold text-center flex items-center justify-center gap-2 active:scale-98 transition-all shadow-md cursor-pointer"
                 >
-                  <span>Ajukan Minat Equity</span>
+                  <span>{cms?.mobile_interest_label || cms?.cta_primary || 'Ajukan Minat Equity'}</span>
                   <ArrowRight size={16} />
                 </button>
 
@@ -209,7 +204,7 @@ export const Header: React.FC<HeaderProps> = ({
                   }}
                   className="w-full py-3 px-5 rounded-xl border border-white/20 text-white font-medium text-center hover:bg-white/10 transition-all cursor-pointer"
                 >
-                  Masuk Portal (Investor / Admin)
+                  {cms?.mobile_login_label || 'Masuk Portal (Investor / Admin)'}
                 </button>
               </>
             )}
