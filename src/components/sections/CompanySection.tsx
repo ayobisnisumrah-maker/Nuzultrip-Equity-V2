@@ -3,7 +3,6 @@ import { Container } from '../layout/Container';
 import { Eyebrow } from '../ui/Eyebrow';
 import { ArrowButton } from '../ui/ArrowButton';
 import { AnimatedNumber } from '../ui/AnimatedNumber';
-import { IMAGES } from '../../data/landingData';
 import { loadPublicHome } from '../../services/publicPortalService';
 import { supabase } from '../../lib/supabase';
 
@@ -14,7 +13,7 @@ interface CompanySectionProps {
 export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [cms, setCms] = useState<any>(null);
-  const companyImages = Array.isArray(cms?.images) && cms.images.length ? cms.images : cms?.image_url ? [cms.image_url] : IMAGES.companySlices;
+  const companyImages = Array.isArray(cms?.images) ? cms.images : cms?.image_url ? [cms.image_url] : [];
   const companyMetrics:any[] = Array.isArray(cms?.metrics) ? cms.metrics : [];
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
@@ -34,7 +33,7 @@ export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) 
     if (!isTouch) return;
 
     const interval = setInterval(() => {
-      setActiveImageIndex((prev) => (prev + 1) % companyImages.length);
+      if(companyImages.length)setActiveImageIndex((prev) => (prev + 1) % companyImages.length);
     }, 3200);
 
     return () => clearInterval(interval);
@@ -71,12 +70,12 @@ export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) 
           {/* Column 1: Left Description & CTA */}
           <div className="lg:col-span-4 flex flex-col justify-between h-full">
             <div>
-              <Eyebrow>{cms?.eyebrow || 'PERUSAHAAN'}</Eyebrow>
+              <Eyebrow>{cms?.eyebrow || ''}</Eyebrow>
               <h2 className="font-h2 font-bold text-[#111111] leading-[1.05] tracking-tight mb-5 sm:mb-6">
-                {cms?.title || <>Perjalanan<br />Muslim yang<br />Bertumbuh</>}
+                {cms?.title || ''}
               </h2>
               <p className="text-[16px] sm:text-[17px] text-[#555555] leading-[1.65] max-w-[360px]">
-                {cms?.description || 'Menghadirkan layanan perjalanan ibadah yang bermakna melalui layanan, jaringan, dan teknologi.'}
+                {cms?.description || ''}
               </p>
             </div>
 
@@ -87,7 +86,7 @@ export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) 
                 onClick={onOpenDetail}
                 id="company-cta-detail"
               >
-                {cms?.cta_label || 'Lebih Detail Penawaran'}
+                {cms?.cta_label || ''}
               </ArrowButton>
             </div>
           </div>
@@ -109,7 +108,7 @@ export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) 
                 >
                   <img
                     src={url}
-                    alt={cms?.image_alt ? `${cms.image_alt} #${idx+1}` : `Galeri perjalanan Nuzultrip #${idx+1}`}
+                    alt={cms?.image_alt ? `${cms.image_alt} #${idx+1}` : ''}
                     className="w-full h-full object-cover object-center"
                     loading="lazy"
                   />
@@ -194,7 +193,7 @@ export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) 
                         : 'text-[#111111] group-hover:text-black'
                     }`}
                   >
-                    {cms?.credential_title || 'Amanah'}
+                    {cms?.credential_title || ''}
                   </div>
                   {activeImageIndex === Math.max(companyImages.length-1,0) && (
                     <span className="w-1.5 h-1.5 rounded-full bg-[#111111] animate-pulse" />
@@ -207,7 +206,7 @@ export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) 
                       : 'text-[#666666] group-hover:text-[#333333]'
                   }`}
                 >
-                  {cms?.credential_description || 'Terverifikasi PPIU Kemenag'}
+                  {cms?.credential_description || ''}
                 </p>
               </div>
             </div>
