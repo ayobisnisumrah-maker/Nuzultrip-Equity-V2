@@ -3,7 +3,6 @@ import { Users, Handshake, Building } from 'lucide-react';
 import { Container } from '../layout/Container';
 import { Eyebrow } from '../ui/Eyebrow';
 import { ArrowButton } from '../ui/ArrowButton';
-import { IMAGES } from '../../data/landingData';
 import { loadPublicHome } from '../../services/publicPortalService';
 import { supabase } from '../../lib/supabase';
 
@@ -38,7 +37,7 @@ export const NetworkSection: React.FC<NetworkSectionProps> = ({ onOpenDetail }) 
           {/* Column 1: Left Editorial Content */}
           <div className="lg:col-span-4 flex flex-col justify-between h-full">
             <div>
-              <Eyebrow>{cms?.eyebrow || 'JARINGAN & MITRA'}</Eyebrow>
+              <Eyebrow>{cms?.eyebrow || ''}</Eyebrow>
               <h2 className="font-h2 font-bold text-[#111111] leading-[1.05] tracking-tight mb-5 sm:mb-6">
                 {cms?.title || ''}
               </h2>
@@ -54,7 +53,7 @@ export const NetworkSection: React.FC<NetworkSectionProps> = ({ onOpenDetail }) 
                 onClick={onOpenDetail}
                 id="network-cta-detail"
               >
-                {cms?.cta_label || 'Pelajari Selengkapnya'}
+                {cms?.cta_label || ''}
               </ArrowButton>
             </div>
           </div>
@@ -85,7 +84,7 @@ export const NetworkSection: React.FC<NetworkSectionProps> = ({ onOpenDetail }) 
           <div className="lg:col-span-4 flex flex-col h-full">
             <div className="relative w-full h-full min-h-[380px] sm:min-h-[460px] rounded-2xl overflow-hidden shadow-lg border border-black/10 flex flex-col justify-end p-7 text-white group">
               <img
-                src={cms?.image_url || IMAGES.partnerPortrait}
+                src={cms?.image_url || ''}
                 alt={cms?.image_alt || ''}
                 className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
                 loading="lazy"
