@@ -1,36 +1,38 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { ArrowRight } from 'lucide-react';
 import { Container } from '../layout/Container';
 import { Eyebrow } from '../ui/Eyebrow';
 import { ArrowButton } from '../ui/ArrowButton';
-import { ArticleItem } from '../../data/landingData';
-import { loadPublicHome } from '../../services/publicPortalService';
-import { supabase } from '../../lib/supabase';
+import { StaggerHeading } from '../ui/LetterStagger';
+import { ARTICLES_LIST, ArticleItem } from '../../data/landingData';
 
 interface ArticlesSectionProps {
   onSelectArticle: (article: ArticleItem) => void;
 }
 
 export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ onSelectArticle }) => {
-  const[cms,setCms]=useState<any>(null);
-  useEffect(()=>{let active=true;const sync=async()=>{try{const sections=await loadPublicHome();if(active)setCms(sections.find(s=>s.anchorId==='konten')?.content?.articles_section||null)}catch{}};void sync();const channel=supabase?.channel('public-articles-cms').on('postgres_changes',{event:'*',schema:'public',table:'portal_sections'},()=>void sync()).on('postgres_changes',{event:'*',schema:'public',table:'portal_section_versions'},()=>void sync()).subscribe();return()=>{active=false;if(channel&&supabase)void supabase.removeChannel(channel)}},[]);
-  const articles:ArticleItem[]=Array.isArray(cms?.items)?cms.items:[];
   return (
     <section
       id="artikel"
-      className="py-16 sm:py-24 lg:py-32 border-t border-black/[0.06]"
+      className="py-16 sm:py-24 lg:py-28 border-t border-black/[0.08]"
     >
       <Container size="default">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-stretch">
           {/* Left Column: Title & CTA */}
           <div className="lg:col-span-4 flex flex-col justify-between h-full">
             <div>
-              <Eyebrow>{cms?.eyebrow || ''}</Eyebrow>
-              <h2 className="font-h2 font-bold text-[#111111] leading-[1.05] tracking-tight mb-5 sm:mb-6">
-                {cms?.title || ''}
-              </h2>
+              <Eyebrow>ARTIKEL & BERITA</Eyebrow>
+              <div className="mb-5 sm:mb-6">
+                <StaggerHeading
+                  as="h2"
+                  text="Pahami Peluang. Ambil Keputusan."
+                  className="font-h2 font-bold text-[#111111] leading-[1.08] tracking-tight"
+                  highlightWord="Keputusan."
+                  highlightClass="text-emerald-600"
+                />
+              </div>
               <p className="text-[16px] sm:text-[17px] text-[#555555] leading-[1.65] max-w-[360px]">
-                {cms?.description || ''}
+                Analisis pasar, panduan investasi syariah, dan pembaruan strategis industri perjalanan ibadah Indonesia.
               </p>
             </div>
 
@@ -38,21 +40,21 @@ export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ onSelectArticl
             <div className="pt-8 sm:pt-10 mt-auto">
               <ArrowButton
                 variant="link"
-                onClick={() => articles[0] && onSelectArticle(articles[0])}
+                onClick={() => onSelectArticle(ARTICLES_LIST[0])}
                 id="articles-cta-more"
               >
-                {cms?.more_label || ''}
+                Lebih Artikel Lainnya
               </ArrowButton>
             </div>
           </div>
 
           {/* Right Column: 2 Editorial Cards */}
           <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {articles.map((article) => (
+            {ARTICLES_LIST.map((article) => (
               <article
                 key={article.id}
                 onClick={() => onSelectArticle(article)}
-                className="bg-white rounded-2xl overflow-hidden border border-black/[0.08] shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex flex-col justify-between hover:border-black/25 hover:shadow-md transition-all duration-300 cursor-pointer group"
+                className="bg-white rounded-2xl overflow-hidden border border-black/[0.08] shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex flex-col justify-between hover:shadow-md transition-all duration-300 cursor-pointer group outline-none"
               >
                 {/* Image */}
                 <div className="relative w-full h-[210px] overflow-hidden bg-[#E8E8E4]">
@@ -86,7 +88,7 @@ export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ onSelectArticl
                   </div>
 
                   <div className="mt-6 pt-4 border-t border-black/[0.06] flex items-center justify-between text-[13px] font-bold text-[#111111]">
-                    <span>{cms?.read_label || ''}</span>
+                    <span>Baca Selengkapnya</span>
                     <ArrowRight
                       size={15}
                       className="group-hover:translate-x-1.5 transition-transform duration-200"
