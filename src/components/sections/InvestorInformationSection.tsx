@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { Container } from '../layout/Container';
 import { Eyebrow } from '../ui/Eyebrow';
-import { INVESTOR_INFO_LIST, InvestorInfoItem, IMAGES } from '../../data/landingData';
+import { INVESTOR_INFO_LIST, InvestorInfoItem } from '../../data/landingData';
+import { loadPublicHome } from '../../services/publicPortalService';
+import { supabase } from '../../lib/supabase';
 
 interface InvestorInformationSectionProps {
   onSelectItem: (item: InvestorInfoItem) => void;
@@ -12,7 +14,10 @@ export const InvestorInformationSection: React.FC<InvestorInformationSectionProp
   onSelectItem,
 }) => {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
-  const activeId = hoveredCard || INVESTOR_INFO_LIST[0].id;
+  const [cms,setCms]=useState<any>(null);
+  useEffect(()=>{let active=true;const sync=async()=>{try{const sections=await loadPublicHome();if(active)setCms(sections.find(s=>s.anchorId==='dokumen')?.content||null)}catch{}};void sync();const channel=supabase?.channel('public-investor-info-cms').on('postgres_changes',{event:'*',schema:'public',table:'portal_sections'},()=>void sync()).on('postgres_changes',{event:'*',schema:'public',table:'portal_section_versions'},()=>void sync()).subscribe();return()=>{active=false;if(channel&&supabase)void supabase.removeChannel(channel)}},[]);
+  const items:InvestorInfoItem[]=Array.isArray(cms?.items)&&cms.items.length?cms.items:INVESTOR_INFO_LIST;
+  const activeId = hoveredCard || items[0]?.id;
 
   return (
     <section
@@ -22,9 +27,9 @@ export const InvestorInformationSection: React.FC<InvestorInformationSectionProp
       <Container size="default">
         {/* Section Header */}
         <div className="max-w-[720px] mb-12 sm:mb-16">
-          <Eyebrow>INFORMASI INVESTOR</Eyebrow>
+          <Eyebrow>{cms?.eyebrow || 'INFORMASI INVESTOR'}</Eyebrow>
           <h2 className="font-h2 font-bold text-[#111111] leading-[1.08] tracking-tight">
-            Informasi penting dalam satu tempat
+            {cms?.title || 'Informasi penting dalam satu tempat'}
           </h2>
         </div>
 
@@ -32,7 +37,7 @@ export const InvestorInformationSection: React.FC<InvestorInformationSectionProp
           {/* Left Column: Image that dynamically updates on card hover (gambar saja tanpa text atau keterangan) */}
           <div className="lg:col-span-5 flex flex-col">
             <div className="relative w-full h-full min-h-[380px] sm:min-h-[500px] rounded-2xl overflow-hidden border border-black/[0.08] shadow-sm bg-[#E8E8E4]">
-              {INVESTOR_INFO_LIST.map((item) => (
+              {items.map((item) => (
                 <img
                   key={item.id}
                   src={item.imageUrl}
@@ -50,7 +55,7 @@ export const InvestorInformationSection: React.FC<InvestorInformationSectionProp
 
           {/* Right Column: 6 Investor Information Cards in 2 columns x 3 rows */}
           <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {INVESTOR_INFO_LIST.map((item) => {
+            {items.map((item) => {
               const isItemActive = item.id === activeId;
               return (
                 <div
@@ -73,7 +78,7 @@ export const InvestorInformationSection: React.FC<InvestorInformationSectionProp
                   </div>
 
                   <div className="mt-4 pt-3 border-t border-black/[0.05] flex items-center justify-between text-[13px] font-semibold text-[#111111]">
-                    <span>Selengkapnya</span>
+                    <span>{cms?.cta_label || 'Selengkapnya'}</span>
                     <ArrowRight
                       size={14}
                       className="transition-transform duration-200 group-hover:translate-x-1"
