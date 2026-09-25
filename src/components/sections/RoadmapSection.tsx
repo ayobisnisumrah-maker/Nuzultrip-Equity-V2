@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import { Container } from '../layout/Container';
 import { Eyebrow } from '../ui/Eyebrow';
+import { loadPublicHome } from '../../services/publicPortalService';
+import { supabase } from '../../lib/supabase';
 
 interface RoadmapPhase {
   step: string;
@@ -107,7 +109,11 @@ const ROADMAP_PHASES: RoadmapPhase[] = [
 
 export const RoadmapSection: React.FC = () => {
   const [activeIndex, setActiveIndex] = useState(3); // Default to current active phase in 2026 (Fase 04 Peluang Equity)
+  const [cms, setCms] = useState<any>(null);
+  const phases: RoadmapPhase[] = Array.isArray(cms?.phases) && cms.phases.length ? cms.phases : ROADMAP_PHASES;
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(()=>{let active=true;const sync=async()=>{try{const sections=await loadPublicHome();if(active)setCms(sections.find((s)=>s.anchorId==='perkembangan')?.content||null)}catch{}};void sync();const channel=supabase?.channel('public-roadmap-cms').on('postgres_changes',{event:'*',schema:'public',table:'portal_sections'},()=>void sync()).on('postgres_changes',{event:'*',schema:'public',table:'portal_section_versions'},()=>void sync()).subscribe();return()=>{active=false;if(channel&&supabase)void supabase.removeChannel(channel)}},[]);
 
   const scrollToIndex = (index: number) => {
     if (!scrollRef.current) return;
@@ -138,7 +144,7 @@ export const RoadmapSection: React.FC = () => {
   };
 
   const handleNext = () => {
-    const nextIdx = Math.min(ROADMAP_PHASES.length - 1, activeIndex + 1);
+    const nextIdx = Math.min(phases.length - 1, activeIndex + 1);
     scrollToIndex(nextIdx);
   };
 
@@ -186,7 +192,7 @@ export const RoadmapSection: React.FC = () => {
           {/* Controls: Phase Indicator & Navigation Arrows */}
           <div className="flex items-center gap-3 shrink-0 self-start md:self-end">
             <span className="text-xs font-bold text-[#666666] tracking-wider uppercase bg-black/[0.04] px-3 py-1.5 rounded-full border border-black/[0.06]">
-              Fase 0{activeIndex + 1} / 0{ROADMAP_PHASES.length}
+              Fase 0{activeIndex + 1} / 0{phases.length}
             </span>
 
             <div className="flex items-center gap-1.5">
@@ -206,10 +212,10 @@ export const RoadmapSection: React.FC = () => {
               <button
                 type="button"
                 onClick={handleNext}
-                disabled={activeIndex === ROADMAP_PHASES.length - 1}
+                disabled={activeIndex === phases.length - 1}
                 aria-label="Fase berikutnya"
                 className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all cursor-pointer ${
-                  activeIndex === ROADMAP_PHASES.length - 1
+                  activeIndex === phases.length - 1
                     ? 'border-black/[0.08] text-black/20 cursor-not-allowed'
                     : 'border-black/20 text-[#111111] hover:bg-black hover:text-white hover:border-black shadow-xs'
                 }`}
@@ -222,7 +228,7 @@ export const RoadmapSection: React.FC = () => {
 
         {/* Minimalist Horizontal Step Selector Bar */}
         <div className="hidden sm:grid grid-cols-5 gap-2 mb-6 p-1.5 bg-white rounded-xl border border-black/[0.08] shadow-xs">
-          {ROADMAP_PHASES.map((phase, idx) => {
+          {phases.map((phase, idx) => {
             const isCurrent = idx === activeIndex;
             return (
               <button
@@ -263,7 +269,7 @@ export const RoadmapSection: React.FC = () => {
           className="flex gap-4 overflow-x-auto pb-4 pt-1 snap-x snap-mandatory scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
-          {ROADMAP_PHASES.map((item, index) => {
+          {phases.map((item, index) => {
             const isSelected = index === activeIndex;
             return (
               <div
