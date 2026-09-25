@@ -3,7 +3,7 @@ import { Users, Handshake, Building } from 'lucide-react';
 import { Container } from '../layout/Container';
 import { Eyebrow } from '../ui/Eyebrow';
 import { ArrowButton } from '../ui/ArrowButton';
-import { NETWORK_PARTNERS, IMAGES } from '../../data/landingData';
+import { IMAGES } from '../../data/landingData';
 import { loadPublicHome } from '../../services/publicPortalService';
 import { supabase } from '../../lib/supabase';
 
@@ -14,6 +14,7 @@ interface NetworkSectionProps {
 export const NetworkSection: React.FC<NetworkSectionProps> = ({ onOpenDetail }) => {
   const [cms, setCms] = useState<any>(null);
   useEffect(()=>{let active=true;const sync=async()=>{try{const sections=await loadPublicHome();if(active)setCms(sections.find((s)=>s.anchorId==='logo-jaringan')?.content||sections.find((s)=>s.anchorId==='jaringan')?.content||null)}catch{}};void sync();const channel=supabase?.channel('public-network-cms').on('postgres_changes',{event:'*',schema:'public',table:'portal_sections'},()=>void sync()).on('postgres_changes',{event:'*',schema:'public',table:'portal_section_versions'},()=>void sync()).subscribe();return()=>{active=false;if(channel&&supabase)void supabase.removeChannel(channel)}},[]);
+  const partners=Array.isArray(cms?.partners)?cms.partners:[];
   const getIcon = (iconName: string) => {
     switch (iconName) {
       case 'user':
@@ -37,16 +38,12 @@ export const NetworkSection: React.FC<NetworkSectionProps> = ({ onOpenDetail }) 
           {/* Column 1: Left Editorial Content */}
           <div className="lg:col-span-4 flex flex-col justify-between h-full">
             <div>
-              <Eyebrow>JARINGAN & MITRA</Eyebrow>
+              <Eyebrow>{cms?.eyebrow || 'JARINGAN & MITRA'}</Eyebrow>
               <h2 className="font-h2 font-bold text-[#111111] leading-[1.05] tracking-tight mb-5 sm:mb-6">
-                Terhubung<br />
-                untuk<br />
-                Bertumbuh<br />
-                Bersama
+                {cms?.title || ''}
               </h2>
               <p className="text-[16px] sm:text-[17px] text-[#555555] leading-[1.65] max-w-[360px]">
-                Menjadi bagian dari perjalanan bersama Nuzultrip melalui kepemilikan
-                equity dan sinergi ekosistem.
+                {cms?.description || ''}
               </p>
             </div>
 
@@ -57,14 +54,14 @@ export const NetworkSection: React.FC<NetworkSectionProps> = ({ onOpenDetail }) 
                 onClick={onOpenDetail}
                 id="network-cta-detail"
               >
-                Pelajari Selengkapnya
+                {cms?.cta_label || 'Pelajari Selengkapnya'}
               </ArrowButton>
             </div>
           </div>
 
           {/* Column 2: 3 Stacked Cards */}
           <div className="lg:col-span-4 flex flex-col justify-between gap-4">
-            {NETWORK_PARTNERS.map((partner) => (
+            {partners.map((partner:any) => (
               <div
                 key={partner.id}
                 className="bg-white rounded-2xl p-6 border border-black/[0.08] shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex items-start gap-4 hover:border-black/20 hover:shadow-md transition-all duration-300 group flex-1"
@@ -89,7 +86,7 @@ export const NetworkSection: React.FC<NetworkSectionProps> = ({ onOpenDetail }) 
             <div className="relative w-full h-full min-h-[380px] sm:min-h-[460px] rounded-2xl overflow-hidden shadow-lg border border-black/10 flex flex-col justify-end p-7 text-white group">
               <img
                 src={cms?.image_url || IMAGES.partnerPortrait}
-                alt="Mitra dan Ekosistem Profesional Nuzultrip"
+                alt={cms?.image_alt || ''}
                 className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
                 loading="lazy"
               />
@@ -97,10 +94,7 @@ export const NetworkSection: React.FC<NetworkSectionProps> = ({ onOpenDetail }) 
 
               <div className="relative z-10">
                 <h3 className="text-[28px] sm:text-[32px] font-bold leading-[1.1] tracking-tight">
-                  Satu<br />
-                  Ekosistem,<br />
-                  Banyak<br />
-                  Peluang
+                  {cms?.image_title || ''}
                 </h3>
               </div>
             </div>
