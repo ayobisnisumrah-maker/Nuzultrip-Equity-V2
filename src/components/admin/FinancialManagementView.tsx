@@ -257,12 +257,19 @@ export const FinancialManagementView: React.FC<FinancialManagementViewProps> = (
     }
     setUploadingPdf(true); setMessage(null);
     try {
-      await uploadPublicPdf(file, {
+      const uploaded = await uploadPublicPdf(file, {
         title: currentReport.title,
         summary: currentReport.summary || 'Laporan keuangan resmi untuk investor.',
         kind: 'investor_report',
       });
-      setMessage('PDF berhasil masuk Dokumen Portal sebagai Draft. Admin Dokumen wajib menjalankan Review → Approved → Published sebelum tersedia untuk investor.');
+      const { error: linkError } = await supabase
+        .from('financial_report_versions')
+        .update({ document_asset_id: uploaded.assetId })
+        .eq('id', currentVersion.id)
+        .eq('status', 'draft');
+      if (linkError) throw linkError;
+      setMessage('PDF berhasil masuk Dokumen Portal sebagai Draft dan terhubung ke versi laporan keuangan. Admin Dokumen wajib menjalankan Review → Approved → Published sebelum tersedia untuk investor.');
+      await load();
     } catch (uploadError) {
       setMessage(uploadError instanceof Error ? uploadError.message : 'Upload PDF laporan gagal.');
     } finally {
