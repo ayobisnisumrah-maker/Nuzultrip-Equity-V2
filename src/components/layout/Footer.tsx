@@ -24,9 +24,9 @@ export const Footer: React.FC<FooterProps> = ({
     return()=>{active=false;if(channel&&supabase)void supabase.removeChannel(channel)};
   }, []);
 
-  const normalizeLinks=(value:any,fallback:string[])=>Array.isArray(value)&&value.length?value.map((x:any)=>typeof x==='string'?{label:x}:{label:String(x?.label||''),href:String(x?.href||'')}):fallback.map(label=>({label}));
-  const tentangLinks=normalizeLinks(cms?.footer_about_links,['Model Bisnis','Ekosistem Bisnis','Perkembangan','Agen dan Kemitraan','Informasi','Ringkasan Penawaran','Pemegang Equity']);
-  const infoLinks=normalizeLinks(cms?.footer_info_links,['Penggunaan Dana','Tata Kelola','Faktor Risiko','Mekanisme Hasil','Legal','Kebijakan Privasi','Syarat & Ketentuan','Risk Disclosure']);
+  const normalizeLinks=(value:any)=>Array.isArray(value)?value.map((x:any)=>typeof x==='string'?{label:x}:{label:String(x?.label||''),href:String(x?.href||'')}):[];
+  const tentangLinks=normalizeLinks(cms?.footer_about_links);
+  const infoLinks=normalizeLinks(cms?.footer_info_links);
   const contactPhone=String(cms?.contact_phone||'');
   const socials=cms?.socials||{};
 
@@ -39,13 +39,13 @@ export const Footer: React.FC<FooterProps> = ({
           <div className="lg:col-span-4 flex flex-col justify-between">
             <div>
               <div className="flex items-center mb-4">
-                {logoUrl ? <img src={logoUrl} alt="Nuzultrip Equity" className="h-10 sm:h-11 w-auto max-w-[220px] object-contain" /> : <>
-                  <span className="text-[24px] sm:text-[26px] font-extrabold tracking-tight text-white">{cms?.company_name || 'Nuzultrip'}</span>
-                  <span className="ml-2 text-[10px] font-bold uppercase tracking-[0.16em] px-1.5 py-0.5 rounded bg-white/10 text-white/80 border border-white/15">Equity</span>
+                {logoUrl ? <img src={logoUrl} alt={cms?.footer_logo_alt || cms?.logo_alt || ''} className="h-10 sm:h-11 w-auto max-w-[220px] object-contain" /> : <>
+                  <span className="text-[24px] sm:text-[26px] font-extrabold tracking-tight text-white">{cms?.company_name || ''}</span>
+                  <span className="ml-2 text-[10px] font-bold uppercase tracking-[0.16em] px-1.5 py-0.5 rounded bg-white/10 text-white/80 border border-white/15">{cms?.brand_suffix || ''}</span>
                 </>}
               </div>
               <p className="text-[14px] sm:text-[15px] text-white/70 leading-relaxed max-w-[320px]">
-                {cms?.footer_tagline || 'Melayani perjalanan Muslim Indonesia dengan hati, profesionalisme, dan teknologi.'}
+                {cms?.footer_tagline || ''}
               </p>
 
               <div className="mt-4 text-xs text-white/60 space-y-1.5">
@@ -97,7 +97,7 @@ export const Footer: React.FC<FooterProps> = ({
           {/* Col 2: Tentang Nuzultrip */}
           <div className="lg:col-span-3">
             <h4 className="text-[12px] font-bold uppercase tracking-[0.16em] text-white/50 mb-5">
-              {cms?.footer_about_title || 'TENTANG NUZULTRIP'}
+              {cms?.footer_about_title || ''}
             </h4>
             <ul className="space-y-2.5">
               {tentangLinks.map((item:any) => (
@@ -117,7 +117,7 @@ export const Footer: React.FC<FooterProps> = ({
           {/* Col 3: Informasi & Legal */}
           <div className="lg:col-span-2">
             <h4 className="text-[12px] font-bold uppercase tracking-[0.16em] text-white/50 mb-5">
-              {cms?.footer_info_title || 'INFORMASI'}
+              {cms?.footer_info_title || ''}
             </h4>
             <ul className="space-y-2.5">
               {infoLinks.map((item:any) => (
@@ -138,19 +138,19 @@ export const Footer: React.FC<FooterProps> = ({
           <div className="lg:col-span-3">
             <div className="bg-white/[0.04] rounded-2xl p-6 border border-white/15">
               <h4 className="text-[12px] font-bold uppercase tracking-[0.16em] text-white/60 mb-2">
-                {cms?.footer_contact_title || 'BUTUH INFORMASI TERBARU?'}
+                {cms?.footer_contact_title || ''}
               </h4>
               <p className="text-[13.5px] text-white/70 leading-relaxed mb-5">
-                {cms?.footer_contact_description || 'Hubungi tim Investor Relations untuk informasi, dokumen, atau pembaruan resmi Nuzultrip Equity.'}
+                {cms?.footer_contact_description || ''}
               </p>
               <a
-                href={`https://wa.me/${contactPhone.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(cms?.contact_message||'Halo Tim Investor Relations, saya membutuhkan informasi terbaru mengenai penawaran equity.')}`}
+                href={`https://wa.me/${contactPhone.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(cms?.contact_message||'')}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full min-h-[56px] py-3 px-4 rounded-xl bg-white text-[#090909] font-bold text-[13.5px] flex items-center justify-between gap-3 hover:bg-[#EDEDEB] transition-all group cursor-pointer"
               >
                 <span className="min-w-0 text-left leading-[1.35]">
-                  <span className="block sm:inline">{cms?.contact_label || 'Hubungi Kami'}</span>
+                  <span className="block sm:inline">{cms?.contact_label || ''}</span>
                   <span className="block sm:inline sm:ml-1 break-words">({contactPhone})</span>
                 </span>
                 <span className="w-8 h-8 shrink-0 rounded-full bg-[#F4F1E8] flex items-center justify-center text-[#8B6B08]">
@@ -165,7 +165,7 @@ export const Footer: React.FC<FooterProps> = ({
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[13px] text-white/50">
           <p>{cms?.footer_copyright || ''}</p>
           <div className="flex items-center gap-4 text-center sm:text-right">
-            <span>{cms?.footer_bottom_text || 'Platform Penawaran Equity Ekosistem Perjalanan Muslim Indonesia.'}</span>
+            <span>{cms?.footer_bottom_text || ''}</span>
           </div>
         </div>
       </Container>
