@@ -12,7 +12,6 @@ import {
 } from 'lucide-react';
 import { Container } from '../layout/Container';
 import { Eyebrow } from '../ui/Eyebrow';
-import { realtimeStore, PortalSettings } from '../../services/realtimeStore';
 import { loadPublicHome } from '../../services/publicPortalService';
 import { supabase } from '../../lib/supabase';
 
@@ -31,82 +30,25 @@ interface StepItem {
   icon: React.ReactNode;
 }
 
-const DEFAULT_STEPS: StepItem[] = [
-  {
-    id: 'step-1',
-    stepNumber: '01',
-    title: 'Pengisian Minat & Reservasi',
-    description:
-      'Pengisian formulir Letter of Intent (LOI) dan penentuan kuota 1 hingga 50 unit equity yang dikehendaki.',
-    duration: '± 3 Menit',
-    output: 'Bukti Reservasi Unit',
-    icon: <FileText size={20} className="text-emerald-400" />,
-  },
-  {
-    id: 'step-2',
-    stepNumber: '02',
-    title: 'Verifikasi & Due Diligence',
-    description:
-      'Akses prospektus penawaran, audit laporan keuangan historis, serta sesi konsultasi eksklusif bersama Direksi.',
-    duration: '1 – 2 Hari Kerja',
-    output: 'Prospektus & NDA',
-    icon: <SearchCheck size={20} className="text-emerald-400" />,
-  },
-  {
-    id: 'step-3',
-    stepNumber: '03',
-    title: 'Akad Notaris & Penyetoran',
-    description:
-      'Penandatanganan Akta Perjanjian Pemegang Saham (SHA) resmi di hadapan Notaris rekanan berizin.',
-    duration: 'Jadwal Terjadwal',
-    output: 'Akta Notaris Resmi',
-    icon: <Scale size={20} className="text-emerald-400" />,
-  },
-  {
-    id: 'step-4',
-    stepNumber: '04',
-    title: 'Penerbitan Saham & Portal',
-    description:
-      'Penyerahan Sertifikat Saham resmi dan aktivasi akun portal investor untuk memantau dividen bulanan.',
-    duration: 'Langsung Aktif',
-    output: 'Sertifikat & Portal Investor',
-    icon: <Award size={20} className="text-emerald-400" />,
-  },
-];
-
 export const ProcessSection: React.FC<ProcessSectionProps> = ({
   onOpenDetail,
   onOpenInterest,
 }) => {
   const [activeStep, setActiveStep] = useState<number>(0);
-  const [settings, setSettings] = useState<PortalSettings>(() =>
-    realtimeStore.getPortalSettings()
-  );
   const [cms, setCms] = useState<any>(null);
 
   useEffect(()=>{let active=true;const sync=async()=>{try{const sections=await loadPublicHome();if(active)setCms(sections.find((s)=>s.anchorId==='governance')?.content||sections.find((s)=>s.anchorId==='proses')?.content||null)}catch{}};void sync();const channel=supabase?.channel('public-process-cms').on('postgres_changes',{event:'*',schema:'public',table:'portal_sections'},()=>void sync()).on('postgres_changes',{event:'*',schema:'public',table:'portal_section_versions'},()=>void sync()).subscribe();return()=>{active=false;if(channel&&supabase)void supabase.removeChannel(channel)}},[]);
 
-  useEffect(() => {
-    const update = () => {
-      setSettings(realtimeStore.getPortalSettings());
-    };
-    const unsub = realtimeStore.subscribe(update);
-    return () => unsub();
-  }, []);
-
-  const steps: StepItem[] = DEFAULT_STEPS.map((step, idx) => {
-    const source = Array.isArray(cms?.steps) ? cms.steps[idx] : settings.processList?.[idx];
-    if (!source) return step;
-    return {
-      ...step,
-      id: source.id || step.id,
-      stepNumber: source.stepNumber || source.step_number || step.stepNumber,
-      title: source.title || step.title,
-      description: source.description || step.description,
-      duration: source.duration || step.duration,
-      output: source.output || step.output,
-    };
-  });
+  const iconSet=[<FileText size={20} className="text-emerald-400" />,<SearchCheck size={20} className="text-emerald-400" />,<Scale size={20} className="text-emerald-400" />,<Award size={20} className="text-emerald-400" />];
+  const steps: StepItem[] = (Array.isArray(cms?.steps) ? cms.steps : []).map((source:any,idx:number)=>({
+    id:source.id||`step-${idx+1}`,
+    stepNumber:source.stepNumber||source.step_number||String(idx+1).padStart(2,'0'),
+    title:source.title||'',
+    description:source.description||'',
+    duration:source.duration||'',
+    output:source.output||'',
+    icon:iconSet[idx%iconSet.length],
+  }));
 
   return (
     <section
@@ -206,7 +148,7 @@ export const ProcessSection: React.FC<ProcessSectionProps> = ({
                     <div className="flex items-center justify-between text-xs text-white/50">
                       <span className="flex items-center gap-1.5">
                         <Clock size={12} className="text-emerald-400/80" />
-                        <span>Estimasi</span>
+                        <span>{cms?.duration_label || ''}</span>
                       </span>
                       <span className="font-semibold text-white/80">{step.duration}</span>
                     </div>
@@ -214,7 +156,7 @@ export const ProcessSection: React.FC<ProcessSectionProps> = ({
                     <div className="flex items-center justify-between text-xs">
                       <span className="flex items-center gap-1.5 text-white/50">
                         <ShieldCheck size={12} className="text-emerald-400/80" />
-                        <span>Output</span>
+                        <span>{cms?.output_label || ''}</span>
                       </span>
                       <span className="font-medium text-emerald-300/90 truncate max-w-[150px]">
                         {step.output}
@@ -235,7 +177,7 @@ export const ProcessSection: React.FC<ProcessSectionProps> = ({
             onClick={onOpenInterest || onOpenDetail}
             className="w-full sm:w-auto px-7 py-3.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-sm transition-all duration-200 shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 cursor-pointer active:scale-98"
           >
-            <span>Ajukan Minat Unit Equity</span>
+            <span>{cms?.primary_cta_label || ''}</span>
             <ArrowRight size={16} />
           </button>
 
@@ -245,7 +187,7 @@ export const ProcessSection: React.FC<ProcessSectionProps> = ({
             onClick={onOpenDetail}
             className="w-full sm:w-auto px-6 py-3.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/15 text-white font-medium text-sm transition-all duration-200 cursor-pointer text-center"
           >
-            Pelajari Prosedur Lengkap
+            {cms?.secondary_cta_label || ''}
           </button>
         </div>
       </Container>
