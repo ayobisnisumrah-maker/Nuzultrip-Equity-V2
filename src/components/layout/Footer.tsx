@@ -21,7 +21,7 @@ export const Footer: React.FC<FooterProps> = ({
 
   useEffect(() => {
     let active=true;
-    const syncLogo=async()=>{try{const sections=await loadPublicHome();const home=sections.find((s)=>s.anchorId==='beranda');if(active)setLogoUrl(String(home?.content?.logo_url||''))}catch{}};
+    const syncLogo=async()=>{try{const sections=await loadPublicHome();const home=sections.find((s)=>s.anchorId==='beranda');if(active)setLogoUrl(String(home?.content?.footer_logo_url||home?.content?.logo_url||''))}catch{}};
     void syncLogo();
     const channel=supabase?.channel('public-footer-brand').on('postgres_changes',{event:'*',schema:'public',table:'portal_sections'},()=>void syncLogo()).on('postgres_changes',{event:'*',schema:'public',table:'portal_section_versions'},()=>void syncLogo()).subscribe();
     return()=>{active=false;if(channel&&supabase)void supabase.removeChannel(channel)};
