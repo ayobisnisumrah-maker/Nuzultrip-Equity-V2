@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { ArrowRight, Download, ChevronDown, Bell } from 'lucide-react';
 import { HeroScrollAtmosphere } from '../hero/HeroScrollAtmosphere';
 import { realtimeStore, PortalSettings } from '../../services/realtimeStore';
+import { loadPublicHome } from '../../services/publicPortalService';
+import { supabase } from '../../lib/supabase';
 
 interface HeroSectionProps {
   onOpenInterest: () => void;
@@ -26,6 +28,15 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   const [settings, setSettings] = useState<PortalSettings>(() =>
     realtimeStore.getPortalSettings()
   );
+  const [cmsHome, setCmsHome] = useState<any>(null);
+
+  useEffect(() => {
+    let active=true;
+    const sync=async()=>{try{const sections=await loadPublicHome();if(active)setCmsHome(sections.find((s)=>s.anchorId==='beranda')?.content||null)}catch{}};
+    void sync();
+    const channel=supabase?.channel('public-hero-cms').on('postgres_changes',{event:'*',schema:'public',table:'portal_sections'},()=>void sync()).on('postgres_changes',{event:'*',schema:'public',table:'portal_section_versions'},()=>void sync()).subscribe();
+    return()=>{active=false;if(channel&&supabase)void supabase.removeChannel(channel)};
+  }, []);
 
   useEffect(() => {
     const update = () => {
@@ -91,6 +102,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
       id="hero"
       className="relative min-h-[100dvh] flex flex-col justify-center items-center overflow-hidden bg-[#111822] text-white pt-24 pb-10 px-4 sm:px-6 lg:px-8"
     >
+      {cmsHome?.hero_image_url && <><img src={cmsHome.hero_image_url} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover object-center" /><div className="absolute inset-0 bg-[#111822]/70" /></>}
       {/* Dynamic Scroll Atmosphere Directly Behind the Headline Text */}
       <HeroScrollAtmosphere scrollY={scrollY} />
 
@@ -112,7 +124,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           style={parallaxHeading}
         >
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-          <span>{settings.heroBadgeText || 'NUZULTRIP EQUITY · EKOSISTEM PERJALANAN MUSLIM'}</span>
+          <span>{cmsHome?.badge_text || settings.heroBadgeText || 'NUZULTRIP EQUITY · EKOSISTEM PERJALANAN MUSLIM'}</span>
         </div>
 
         {/* Display Heading */}
@@ -120,7 +132,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           className={`${entranceClass} stagger-2 text-[32px] sm:text-[46px] lg:text-[58px] font-extrabold text-white tracking-tight leading-[1.1] max-w-4xl text-balance will-change-transform`}
           style={parallaxHeading}
         >
-          {settings.heroHeadline || 'Berkembang Dalam Ekosistem Muslim Yang Terintegrasi'}
+          {cmsHome?.headline || settings.heroHeadline || 'Berkembang Dalam Ekosistem Muslim Yang Terintegrasi'}
         </h1>
 
         {/* Subtitle */}
@@ -128,7 +140,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           className={`${entranceClass} stagger-3 text-[14.5px] sm:text-[16.5px] text-slate-300 max-w-2xl leading-relaxed text-balance will-change-transform`}
           style={parallaxSubtitle}
         >
-          {settings.heroSubheadline ||
+          {cmsHome?.subheadline || settings.heroSubheadline ||
             'Nuzultrip membangun ekosistem perjalanan Muslim melalui integrasi layanan, jaringan, dan teknologi untuk pertumbuhan investasi jangka panjang.'}
         </p>
 
