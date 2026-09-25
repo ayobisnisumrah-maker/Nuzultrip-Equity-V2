@@ -36,9 +36,9 @@ export const Footer: React.FC<FooterProps> = ({
     return () => unsub();
   }, []);
 
-  const tentangLinks:string[] = Array.isArray(cms?.footer_about_links) ? cms.footer_about_links : ['Model Bisnis','Ekosistem Bisnis','Perkembangan','Agen dan Kemitraan','Informasi','Ringkasan Penawaran','Pemegang Equity'];
-
-  const infoLinks:string[] = Array.isArray(cms?.footer_info_links) ? cms.footer_info_links : ['Penggunaan Dana','Tata Kelola','Faktor Risiko','Mekanisme Hasil','Legal','Kebijakan Privasi','Syarat & Ketentuan','Risk Disclosure'];
+  const normalizeLinks=(value:any,fallback:string[])=>Array.isArray(value)&&value.length?value.map((x:any)=>typeof x==='string'?{label:x}:{label:String(x?.label||''),href:String(x?.href||'')}):fallback.map(label=>({label}));
+  const tentangLinks=normalizeLinks(cms?.footer_about_links,['Model Bisnis','Ekosistem Bisnis','Perkembangan','Agen dan Kemitraan','Informasi','Ringkasan Penawaran','Pemegang Equity']);
+  const infoLinks=normalizeLinks(cms?.footer_info_links,['Penggunaan Dana','Tata Kelola','Faktor Risiko','Mekanisme Hasil','Legal','Kebijakan Privasi','Syarat & Ketentuan','Risk Disclosure']);
   const contactPhone=String(cms?.contact_phone||settings.contactPhone||'');
   const socials=cms?.socials||{};
 
@@ -65,7 +65,7 @@ export const Footer: React.FC<FooterProps> = ({
                   <MapPin size={13} className="text-emerald-400 shrink-0 mt-0.5" />
                   <span className="leading-snug">{cms?.company_address || settings.companyAddress}</span>
                 </div>
-                {settings.companyLicensePpiu && (
+                {(cms?.company_license || settings.companyLicensePpiu) && (
                   <div className="flex items-start gap-2">
                     <ShieldCheck size={13} className="text-emerald-400 shrink-0 mt-0.5" />
                     <span className="leading-snug">{cms?.company_license || settings.companyLicensePpiu}</span>
@@ -76,33 +76,33 @@ export const Footer: React.FC<FooterProps> = ({
 
             {/* Social Media Links */}
             <div className="mt-8 flex items-center gap-3">
-              <a
-                href={socials.instagram || '#'}
+              {socials.instagram && <a
+                href={socials.instagram}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram Nuzultrip"
                 className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
               >
                 <Instagram size={17} />
-              </a>
-              <a
-                href={socials.facebook || '#'}
+              </a>}
+              {socials.facebook && <a
+                href={socials.facebook}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Facebook Nuzultrip"
                 className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
               >
                 <Facebook size={17} />
-              </a>
-              <a
-                href={socials.tiktok || '#'}
+              </a>}
+              {socials.tiktok && <a
+                href={socials.tiktok}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="TikTok Nuzultrip"
                 className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
               >
                 <TikTokIcon size={17} />
-              </a>
+              </a>}
             </div>
           </div>
 
@@ -112,14 +112,14 @@ export const Footer: React.FC<FooterProps> = ({
               {cms?.footer_about_title || 'TENTANG NUZULTRIP'}
             </h4>
             <ul className="space-y-2.5">
-              {tentangLinks.map((item) => (
-                <li key={item}>
+              {tentangLinks.map((item:any) => (
+                <li key={item.label}>
                   <button
                     type="button"
-                    onClick={() => onOpenDetail(item)}
+                    onClick={() => item.href ? (window.location.href=item.href) : onOpenDetail(item.label)}
                     className="text-[14px] text-white/75 hover:text-white transition-colors text-left focus-visible:outline-none cursor-pointer"
                   >
-                    {item}
+                    {item.label}
                   </button>
                 </li>
               ))}
@@ -132,14 +132,14 @@ export const Footer: React.FC<FooterProps> = ({
               {cms?.footer_info_title || 'INFORMASI'}
             </h4>
             <ul className="space-y-2.5">
-              {infoLinks.map((item) => (
-                <li key={item}>
+              {infoLinks.map((item:any) => (
+                <li key={item.label}>
                   <button
                     type="button"
-                    onClick={() => onOpenDetail(item)}
+                    onClick={() => item.href ? (window.location.href=item.href) : onOpenDetail(item.label)}
                     className="text-[14px] text-white/75 hover:text-white transition-colors text-left focus-visible:outline-none cursor-pointer"
                   >
-                    {item}
+                    {item.label}
                   </button>
                 </li>
               ))}
