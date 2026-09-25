@@ -15,6 +15,7 @@ export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [cms, setCms] = useState<any>(null);
   const companyImages = Array.isArray(cms?.images) && cms.images.length ? cms.images : cms?.image_url ? [cms.image_url] : IMAGES.companySlices;
+  const companyMetrics:any[] = Array.isArray(cms?.metrics) && cms.metrics.length ? cms.metrics : COMPANY_METRICS;
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(()=>{let active=true;const sync=async()=>{try{const sections=await loadPublicHome();if(active)setCms(sections.find((s)=>s.anchorId==='bisnis')?.content||null)}catch{}};void sync();const channel=supabase?.channel('public-company-cms').on('postgres_changes',{event:'*',schema:'public',table:'portal_sections'},()=>void sync()).on('postgres_changes',{event:'*',schema:'public',table:'portal_section_versions'},()=>void sync()).subscribe();return()=>{active=false;if(channel&&supabase)void supabase.removeChannel(channel)}},[]);
@@ -68,15 +69,12 @@ export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) 
           {/* Column 1: Left Description & CTA */}
           <div className="lg:col-span-4 flex flex-col justify-between h-full">
             <div>
-              <Eyebrow>PERUSAHAAN</Eyebrow>
+              <Eyebrow>{cms?.eyebrow || 'PERUSAHAAN'}</Eyebrow>
               <h2 className="font-h2 font-bold text-[#111111] leading-[1.05] tracking-tight mb-5 sm:mb-6">
-                Perjalanan<br />
-                Muslim yang<br />
-                Bertumbuh
+                {cms?.title || <>Perjalanan<br />Muslim yang<br />Bertumbuh</>}
               </h2>
               <p className="text-[16px] sm:text-[17px] text-[#555555] leading-[1.65] max-w-[360px]">
-                Menghadirkan layanan perjalanan ibadah yang bermakna melalui layanan,
-                jaringan, dan teknologi.
+                {cms?.description || 'Menghadirkan layanan perjalanan ibadah yang bermakna melalui layanan, jaringan, dan teknologi.'}
               </p>
             </div>
 
@@ -87,7 +85,7 @@ export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) 
                 onClick={onOpenDetail}
                 id="company-cta-detail"
               >
-                Lebih Detail Penawaran
+                {cms?.cta_label || 'Lebih Detail Penawaran'}
               </ArrowButton>
             </div>
           </div>
@@ -109,7 +107,7 @@ export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) 
                 >
                   <img
                     src={url}
-                    alt={`Galeri perjalanan Nuzultrip #${idx + 1}`}
+                    alt={cms?.image_alt ? `${cms.image_alt} #${idx+1}` : `Galeri perjalanan Nuzultrip #${idx+1}`}
                     className="w-full h-full object-cover object-center"
                     loading="lazy"
                   />
@@ -120,7 +118,7 @@ export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) 
               {/* Clean pure visual image card without text overlay */}
               {/* Indicator bar showing active 1 of 5 */}
               <div className="absolute bottom-4 inset-x-6 z-10 flex items-center justify-center gap-1.5 pointer-events-none">
-                {[0, 1, 2, 3, 4].map((i) => (
+                {companyImages.map((_:string,i:number) => (
                   <div
                     key={i}
                     className={`h-1 rounded-full transition-all duration-300 ${
@@ -135,7 +133,7 @@ export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) 
           {/* Column 3: 5 Poin Metrik & Kredensial Disusun Vertikal */}
           <div className="lg:col-span-4 flex flex-col justify-between py-1 h-full">
             <div className="flex flex-col justify-between h-full gap-y-3 sm:gap-y-3.5">
-              {COMPANY_METRICS.map((item, idx) => {
+              {companyMetrics.map((item:any, idx:number) => {
                 const isActive = activeImageIndex === idx;
                 return (
                   <div
@@ -194,7 +192,7 @@ export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) 
                         : 'text-[#111111] group-hover:text-black'
                     }`}
                   >
-                    Amanah
+                    {cms?.credential_title || 'Amanah'}
                   </div>
                   {activeImageIndex === 4 && (
                     <span className="w-1.5 h-1.5 rounded-full bg-[#111111] animate-pulse" />
@@ -207,7 +205,7 @@ export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) 
                       : 'text-[#666666] group-hover:text-[#333333]'
                   }`}
                 >
-                  Terverifikasi PPIU Kemenag
+                  {cms?.credential_description || 'Terverifikasi PPIU Kemenag'}
                 </p>
               </div>
             </div>
