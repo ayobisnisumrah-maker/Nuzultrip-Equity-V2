@@ -18,10 +18,11 @@ export const Footer: React.FC<FooterProps> = ({
     realtimeStore.getPortalSettings()
   );
   const [logoUrl, setLogoUrl] = useState('');
+  const [cms, setCms] = useState<any>(null);
 
   useEffect(() => {
     let active=true;
-    const syncLogo=async()=>{try{const sections=await loadPublicHome();const home=sections.find((s)=>s.anchorId==='beranda');if(active)setLogoUrl(String(home?.content?.footer_logo_url||home?.content?.logo_url||''))}catch{}};
+    const syncLogo=async()=>{try{const sections=await loadPublicHome();const home=sections.find((s)=>s.anchorId==='beranda');if(active){setLogoUrl(String(home?.content?.footer_logo_url||home?.content?.logo_url||''));setCms(home?.content||null)}}catch{}};
     void syncLogo();
     const channel=supabase?.channel('public-footer-brand').on('postgres_changes',{event:'*',schema:'public',table:'portal_sections'},()=>void syncLogo()).on('postgres_changes',{event:'*',schema:'public',table:'portal_section_versions'},()=>void syncLogo()).subscribe();
     return()=>{active=false;if(channel&&supabase)void supabase.removeChannel(channel)};
@@ -35,26 +36,11 @@ export const Footer: React.FC<FooterProps> = ({
     return () => unsub();
   }, []);
 
-  const tentangLinks = [
-    'Model Bisnis',
-    'Ekosistem Bisnis',
-    'Perkembangan',
-    'Agen dan Kemitraan',
-    'Informasi',
-    'Ringkasan Penawaran',
-    'Pemegang Equity',
-  ];
+  const tentangLinks:string[] = Array.isArray(cms?.footer_about_links) ? cms.footer_about_links : ['Model Bisnis','Ekosistem Bisnis','Perkembangan','Agen dan Kemitraan','Informasi','Ringkasan Penawaran','Pemegang Equity'];
 
-  const infoLinks = [
-    'Penggunaan Dana',
-    'Tata Kelola',
-    'Faktor Risiko',
-    'Mekanisme Hasil',
-    'Legal',
-    'Kebijakan Privasi',
-    'Syarat & Ketentuan',
-    'Risk Disclosure',
-  ];
+  const infoLinks:string[] = Array.isArray(cms?.footer_info_links) ? cms.footer_info_links : ['Penggunaan Dana','Tata Kelola','Faktor Risiko','Mekanisme Hasil','Legal','Kebijakan Privasi','Syarat & Ketentuan','Risk Disclosure'];
+  const contactPhone=String(cms?.contact_phone||settings.contactPhone||'');
+  const socials=cms?.socials||{};
 
   return (
     <footer id="site-footer" className="bg-[#080808] text-white pt-16 sm:pt-20 pb-12 border-t border-white/10">
@@ -71,18 +57,18 @@ export const Footer: React.FC<FooterProps> = ({
                 </>}
               </div>
               <p className="text-[14px] sm:text-[15px] text-white/70 leading-relaxed max-w-[320px]">
-                Melayani perjalanan Muslim Indonesia dengan hati, profesionalisme, dan teknologi.
+                {cms?.footer_tagline || 'Melayani perjalanan Muslim Indonesia dengan hati, profesionalisme, dan teknologi.'}
               </p>
 
               <div className="mt-4 text-xs text-white/60 space-y-1.5">
                 <div className="flex items-start gap-2">
                   <MapPin size={13} className="text-emerald-400 shrink-0 mt-0.5" />
-                  <span className="leading-snug">{settings.companyAddress}</span>
+                  <span className="leading-snug">{cms?.company_address || settings.companyAddress}</span>
                 </div>
                 {settings.companyLicensePpiu && (
                   <div className="flex items-start gap-2">
                     <ShieldCheck size={13} className="text-emerald-400 shrink-0 mt-0.5" />
-                    <span className="leading-snug">{settings.companyLicensePpiu}</span>
+                    <span className="leading-snug">{cms?.company_license || settings.companyLicensePpiu}</span>
                   </div>
                 )}
               </div>
@@ -91,7 +77,7 @@ export const Footer: React.FC<FooterProps> = ({
             {/* Social Media Links */}
             <div className="mt-8 flex items-center gap-3">
               <a
-                href="https://instagram.com"
+                href={socials.instagram || '#'}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram Nuzultrip"
@@ -100,7 +86,7 @@ export const Footer: React.FC<FooterProps> = ({
                 <Instagram size={17} />
               </a>
               <a
-                href="https://facebook.com"
+                href={socials.facebook || '#'}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Facebook Nuzultrip"
@@ -109,7 +95,7 @@ export const Footer: React.FC<FooterProps> = ({
                 <Facebook size={17} />
               </a>
               <a
-                href="https://tiktok.com"
+                href={socials.tiktok || '#'}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="TikTok Nuzultrip"
@@ -123,7 +109,7 @@ export const Footer: React.FC<FooterProps> = ({
           {/* Col 2: Tentang Nuzultrip */}
           <div className="lg:col-span-3">
             <h4 className="text-[12px] font-bold uppercase tracking-[0.16em] text-white/50 mb-5">
-              TENTANG NUZULTRIP
+              {cms?.footer_about_title || 'TENTANG NUZULTRIP'}
             </h4>
             <ul className="space-y-2.5">
               {tentangLinks.map((item) => (
@@ -143,7 +129,7 @@ export const Footer: React.FC<FooterProps> = ({
           {/* Col 3: Informasi & Legal */}
           <div className="lg:col-span-2">
             <h4 className="text-[12px] font-bold uppercase tracking-[0.16em] text-white/50 mb-5">
-              INFORMASI
+              {cms?.footer_info_title || 'INFORMASI'}
             </h4>
             <ul className="space-y-2.5">
               {infoLinks.map((item) => (
@@ -164,20 +150,20 @@ export const Footer: React.FC<FooterProps> = ({
           <div className="lg:col-span-3">
             <div className="bg-white/[0.04] rounded-2xl p-6 border border-white/15">
               <h4 className="text-[12px] font-bold uppercase tracking-[0.16em] text-white/60 mb-2">
-                BUTUH INFORMASI TERBARU?
+                {cms?.footer_contact_title || 'BUTUH INFORMASI TERBARU?'}
               </h4>
               <p className="text-[13.5px] text-white/70 leading-relaxed mb-5">
-                Hubungi tim Investor Relations untuk informasi, dokumen, atau pembaruan resmi Nuzultrip Equity.
+                {cms?.footer_contact_description || 'Hubungi tim Investor Relations untuk informasi, dokumen, atau pembaruan resmi Nuzultrip Equity.'}
               </p>
               <a
-                href={`https://wa.me/${settings.contactPhone.replace(/[^0-9]/g, '')}?text=Halo%20Tim%20Investor%20Relations,%20saya%20membutuhkan%20informasi%20terbaru%20mengenai%20penawaran%20equity.`}
+                href={`https://wa.me/${contactPhone.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(cms?.contact_message||'Halo Tim Investor Relations, saya membutuhkan informasi terbaru mengenai penawaran equity.')}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full min-h-[56px] py-3 px-4 rounded-xl bg-white text-[#090909] font-bold text-[13.5px] flex items-center justify-between gap-3 hover:bg-[#EDEDEB] transition-all group cursor-pointer"
               >
                 <span className="min-w-0 text-left leading-[1.35]">
-                  <span className="block sm:inline">Hubungi Kami</span>
-                  <span className="block sm:inline sm:ml-1 break-words">({settings.contactPhone})</span>
+                  <span className="block sm:inline">{cms?.contact_label || 'Hubungi Kami'}</span>
+                  <span className="block sm:inline sm:ml-1 break-words">({contactPhone})</span>
                 </span>
                 <span className="w-8 h-8 shrink-0 rounded-full bg-[#F4F1E8] flex items-center justify-center text-[#8B6B08]">
                   <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
@@ -189,9 +175,9 @@ export const Footer: React.FC<FooterProps> = ({
 
         {/* Bottom Bar: Copyright & Compliance */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[13px] text-white/50">
-          <p>{settings.footerCopyright || '© 2026 PT. Swarna Dipa Wisata. All Rights Reserved.'}</p>
+          <p>{cms?.footer_copyright || settings.footerCopyright || '© 2026 PT. Swarna Dipa Wisata. All Rights Reserved.'}</p>
           <div className="flex items-center gap-4 text-center sm:text-right">
-            <span>Platform Penawaran Equity Ekosistem Perjalanan Muslim Indonesia.</span>
+            <span>{cms?.footer_bottom_text || 'Platform Penawaran Equity Ekosistem Perjalanan Muslim Indonesia.'}</span>
           </div>
         </div>
       </Container>
