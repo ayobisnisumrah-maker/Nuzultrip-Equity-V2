@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, Menu, X } from 'lucide-react';
 import { Container } from './Container';
+import { loadPublicHome } from '../../services/publicPortalService';
+import { supabase } from '../../lib/supabase';
 
 interface HeaderProps {
   onOpenLogin: () => void;
@@ -19,6 +21,15 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [logoUrl, setLogoUrl] = useState('');
+
+  useEffect(() => {
+    let active=true;
+    const syncLogo=async()=>{try{const sections=await loadPublicHome();const home=sections.find((s)=>s.anchorId==='beranda');if(active)setLogoUrl(String(home?.content?.logo_url||''))}catch{}};
+    void syncLogo();
+    const channel=supabase?.channel('public-header-brand').on('postgres_changes',{event:'*',schema:'public',table:'portal_sections'},()=>void syncLogo()).on('postgres_changes',{event:'*',schema:'public',table:'portal_section_versions'},()=>void syncLogo()).subscribe();
+    return()=>{active=false;if(channel&&supabase)void supabase.removeChannel(channel)};
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -82,14 +93,10 @@ export const Header: React.FC<HeaderProps> = ({
             className="flex items-center gap-2 group focus-visible:outline-none"
             aria-label="Nuzultrip Equity Beranda"
           >
-            <div className="flex items-baseline">
-              <span className="text-[20px] sm:text-[23px] font-extrabold tracking-tight text-white transition-opacity group-hover:opacity-85">
-                Nuzultrip
-              </span>
-              <span className="ml-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-400">
-                Equity
-              </span>
-            </div>
+            {logoUrl ? <img src={logoUrl} alt="Nuzultrip Equity" className="h-8 sm:h-9 w-auto max-w-[180px] object-contain transition-opacity group-hover:opacity-85" /> : <div className="flex items-baseline">
+              <span className="text-[20px] sm:text-[23px] font-extrabold tracking-tight text-white transition-opacity group-hover:opacity-85">Nuzultrip</span>
+              <span className="ml-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-400">Equity</span>
+            </div>}
           </a>
 
           {/* Desktop Navigation */}
