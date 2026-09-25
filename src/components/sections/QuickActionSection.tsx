@@ -27,14 +27,14 @@ export const QuickActionSection: React.FC<QuickActionSectionProps> = ({
           {/* Column 1: Left Headline */}
           <div className="lg:col-span-4 flex flex-col justify-between">
             <div>
-              <Eyebrow variant="dark">QUICK ACTION</Eyebrow>
+              <Eyebrow variant="dark">{cms?.eyebrow || 'QUICK ACTION'}</Eyebrow>
               <h2 className="font-h2 font-bold text-white leading-[1.05] tracking-tight mb-4">
                 Kenali. Pelajari.<br />
                 Tentukan Langkah<br />
                 Anda.
               </h2>
               <p className="text-[15px] sm:text-[16px] text-white/65 leading-relaxed max-w-[320px]">
-                Tim Investor Relations kami siap memberikan pendampingan personal bagi calon mitra dan investor strategis.
+                {cms?.description || 'Tim Investor Relations kami siap memberikan pendampingan personal bagi calon mitra dan investor strategis.'}
               </p>
             </div>
           </div>
@@ -43,7 +43,7 @@ export const QuickActionSection: React.FC<QuickActionSectionProps> = ({
           <div className="lg:col-span-4 flex flex-col justify-between gap-4">
             {/* Action Card 1: Hubungi Tim WhatsApp / Call */}
             <a
-              href="https://wa.me/6281234567890?text=Halo%20Tim%20Nuzultrip%20Equity,%20saya%20tertarik%20mengenal%20penawaran%20equity%20lebih%20lanjut"
+              href={`https://wa.me/${String(cms?.contact_phone||'').replace(/[^0-9]/g,'')}?text=${encodeURIComponent(cms?.contact_message||'Halo Tim Nuzultrip Equity, saya tertarik mengenal penawaran equity lebih lanjut')}`}
               target="_blank"
               rel="noopener noreferrer"
               className="bg-white/[0.04] hover:bg-white/[0.08] rounded-2xl p-6 border border-white/15 hover:border-white/35 transition-all duration-300 flex flex-col justify-between flex-1 group cursor-pointer"
@@ -62,7 +62,7 @@ export const QuickActionSection: React.FC<QuickActionSectionProps> = ({
                   Hubungi Tim
                 </h3>
                 <p className="text-[14px] text-white/70 mt-1 font-mono">
-                  +62 812-3456-7890
+                  {cms?.contact_phone || 'Hubungi Investor Relations'}
                 </p>
               </div>
             </a>
@@ -83,10 +83,10 @@ export const QuickActionSection: React.FC<QuickActionSectionProps> = ({
                   Dokumen Resmi
                 </span>
                 <h3 className="text-[18px] sm:text-[20px] font-bold text-white mt-1">
-                  Unduh Pitchdeck
+                  {cms?.pitchdeck_label || 'Unduh Pitchdeck'}
                 </h3>
                 <p className="text-[14px] text-white/70 mt-1">
-                  Pelajari ringkasan model bisnis & proyeksi
+                  {cms?.pitchdeck_description || 'Pelajari ringkasan model bisnis & proyeksi'}
                 </p>
               </div>
             </div>
