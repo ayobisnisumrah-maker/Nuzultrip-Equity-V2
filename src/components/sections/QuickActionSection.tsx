@@ -3,6 +3,8 @@ import { Phone, FileDown, ArrowRight } from 'lucide-react';
 import { Container } from '../layout/Container';
 import { Eyebrow } from '../ui/Eyebrow';
 import { IMAGES } from '../../data/landingData';
+import { loadPublicHome } from '../../services/publicPortalService';
+import { supabase } from '../../lib/supabase';
 
 interface QuickActionSectionProps {
   onOpenInterest: () => void;
@@ -13,6 +15,8 @@ export const QuickActionSection: React.FC<QuickActionSectionProps> = ({
   onOpenInterest,
   onOpenPitchdeck,
 }) => {
+  const [cms, setCms] = React.useState<any>(null);
+  React.useEffect(()=>{let active=true;const sync=async()=>{try{const sections=await loadPublicHome();if(active)setCms(sections.find((s)=>s.anchorId==='konten')?.content||null)}catch{}};void sync();const channel=supabase?.channel('public-quick-action-cms').on('postgres_changes',{event:'*',schema:'public',table:'portal_sections'},()=>void sync()).on('postgres_changes',{event:'*',schema:'public',table:'portal_section_versions'},()=>void sync()).subscribe();return()=>{active=false;if(channel&&supabase)void supabase.removeChannel(channel)}},[]);
   return (
     <section
       id="kontak"
@@ -92,7 +96,7 @@ export const QuickActionSection: React.FC<QuickActionSectionProps> = ({
           <div className="lg:col-span-4 flex flex-col">
             <div className="relative w-full h-full min-h-[320px] rounded-2xl overflow-hidden border border-white/15 flex flex-col justify-between p-7 text-white group">
               <img
-                src={IMAGES.quickActionBg}
+                src={cms?.image_url || IMAGES.quickActionBg}
                 alt="Ekosistem Nuzultrip"
                 className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
                 loading="lazy"
