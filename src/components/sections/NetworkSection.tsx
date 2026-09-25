@@ -1,15 +1,19 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Users, Handshake, Building } from 'lucide-react';
 import { Container } from '../layout/Container';
 import { Eyebrow } from '../ui/Eyebrow';
 import { ArrowButton } from '../ui/ArrowButton';
 import { NETWORK_PARTNERS, IMAGES } from '../../data/landingData';
+import { loadPublicHome } from '../../services/publicPortalService';
+import { supabase } from '../../lib/supabase';
 
 interface NetworkSectionProps {
   onOpenDetail: () => void;
 }
 
 export const NetworkSection: React.FC<NetworkSectionProps> = ({ onOpenDetail }) => {
+  const [cms, setCms] = useState<any>(null);
+  useEffect(()=>{let active=true;const sync=async()=>{try{const sections=await loadPublicHome();if(active)setCms(sections.find((s)=>s.anchorId==='logo-jaringan')?.content||sections.find((s)=>s.anchorId==='jaringan')?.content||null)}catch{}};void sync();const channel=supabase?.channel('public-network-cms').on('postgres_changes',{event:'*',schema:'public',table:'portal_sections'},()=>void sync()).on('postgres_changes',{event:'*',schema:'public',table:'portal_section_versions'},()=>void sync()).subscribe();return()=>{active=false;if(channel&&supabase)void supabase.removeChannel(channel)}},[]);
   const getIcon = (iconName: string) => {
     switch (iconName) {
       case 'user':
@@ -84,7 +88,7 @@ export const NetworkSection: React.FC<NetworkSectionProps> = ({ onOpenDetail }) 
           <div className="lg:col-span-4 flex flex-col h-full">
             <div className="relative w-full h-full min-h-[380px] sm:min-h-[460px] rounded-2xl overflow-hidden shadow-lg border border-black/10 flex flex-col justify-end p-7 text-white group">
               <img
-                src={IMAGES.partnerPortrait}
+                src={cms?.image_url || IMAGES.partnerPortrait}
                 alt="Mitra dan Ekosistem Profesional Nuzultrip"
                 className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
                 loading="lazy"
