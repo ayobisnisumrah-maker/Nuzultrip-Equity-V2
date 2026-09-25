@@ -3,7 +3,7 @@ import { Container } from '../layout/Container';
 import { Eyebrow } from '../ui/Eyebrow';
 import { ArrowButton } from '../ui/ArrowButton';
 import { AnimatedNumber } from '../ui/AnimatedNumber';
-import { COMPANY_METRICS, IMAGES } from '../../data/landingData';
+import { IMAGES } from '../../data/landingData';
 import { loadPublicHome } from '../../services/publicPortalService';
 import { supabase } from '../../lib/supabase';
 
@@ -15,7 +15,7 @@ export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [cms, setCms] = useState<any>(null);
   const companyImages = Array.isArray(cms?.images) && cms.images.length ? cms.images : cms?.image_url ? [cms.image_url] : IMAGES.companySlices;
-  const companyMetrics:any[] = Array.isArray(cms?.metrics) && cms.metrics.length ? cms.metrics : COMPANY_METRICS;
+  const companyMetrics:any[] = Array.isArray(cms?.metrics) ? cms.metrics : [];
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(()=>{let active=true;const sync=async()=>{try{const sections=await loadPublicHome();if(active)setCms(sections.find((s)=>s.anchorId==='bisnis')?.content||null)}catch{}};void sync();const channel=supabase?.channel('public-company-cms').on('postgres_changes',{event:'*',schema:'public',table:'portal_sections'},()=>void sync()).on('postgres_changes',{event:'*',schema:'public',table:'portal_section_versions'},()=>void sync()).subscribe();return()=>{active=false;if(channel&&supabase)void supabase.removeChannel(channel)}},[]);
@@ -40,7 +40,9 @@ export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) 
     return () => clearInterval(interval);
   }, []);
 
-  // Mouse move handler for 5 horizontal segment divisions
+  useEffect(()=>{if(activeImageIndex>=companyImages.length)setActiveImageIndex(0)},[companyImages.length,activeImageIndex]);
+
+  // Mouse move handler follows the number of published gallery images
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!imageContainerRef.current) return;
     const rect = imageContainerRef.current.getBoundingClientRect();
@@ -48,8 +50,8 @@ export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) 
     const width = rect.width;
     const ratio = Math.max(0, Math.min(1, x / width));
 
-    // Divide 0..1 into 5 parts
-    const index = Math.min(Math.floor(ratio * 5), 4);
+    const count=Math.max(companyImages.length,1);
+    const index = Math.min(Math.floor(ratio * count), count-1);
     if (index !== activeImageIndex) {
       setActiveImageIndex(index);
     }
@@ -176,10 +178,10 @@ export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) 
 
               {/* Point 5: Headline Amanah dengan deskripsi Terverifikasi PPIU Kemenag */}
               <div
-                onMouseEnter={() => setActiveImageIndex(4)}
-                onClick={() => setActiveImageIndex(4)}
+                onMouseEnter={() => setActiveImageIndex(Math.max(companyImages.length-1,0))}
+                onClick={() => setActiveImageIndex(Math.max(companyImages.length-1,0))}
                 className={`pb-2.5 sm:pb-3 border-b transition-all duration-200 cursor-pointer flex flex-col group ${
-                  activeImageIndex === 4
+                  activeImageIndex === Math.max(companyImages.length-1,0)
                     ? 'border-black/50 pl-2'
                     : 'border-black/[0.08] hover:border-black/30 hover:pl-1'
                 }`}
@@ -187,20 +189,20 @@ export const CompanySection: React.FC<CompanySectionProps> = ({ onOpenDetail }) 
                 <div className="flex items-center justify-between">
                   <div
                     className={`text-[26px] sm:text-[30px] font-extrabold tracking-tight leading-none transition-colors duration-200 ${
-                      activeImageIndex === 4
+                      activeImageIndex === Math.max(companyImages.length-1,0)
                         ? 'text-[#000000]'
                         : 'text-[#111111] group-hover:text-black'
                     }`}
                   >
                     {cms?.credential_title || 'Amanah'}
                   </div>
-                  {activeImageIndex === 4 && (
+                  {activeImageIndex === Math.max(companyImages.length-1,0) && (
                     <span className="w-1.5 h-1.5 rounded-full bg-[#111111] animate-pulse" />
                   )}
                 </div>
                 <p
                   className={`text-[13px] sm:text-[14px] font-medium leading-snug mt-1.5 transition-colors duration-200 ${
-                    activeImageIndex === 4
+                    activeImageIndex === Math.max(companyImages.length-1,0)
                       ? 'text-[#111111]'
                       : 'text-[#666666] group-hover:text-[#333333]'
                   }`}
