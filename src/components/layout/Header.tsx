@@ -57,9 +57,7 @@ export const Header: React.FC<HeaderProps> = ({
     };
   }, [mobileMenuOpen]);
 
-  const navLinks = Array.isArray(cms?.nav_links) && cms.nav_links.length ? cms.nav_links : [
-    { label: 'Tentang', href: '#tentang' },{ label: 'Peluang', href: '#peluang' },{ label: 'Proses', href: '#proses' },{ label: 'Roadmap', href: '#roadmap' },{ label: 'Jaringan', href: '#jaringan' },{ label: 'Informasi', href: '#informasi' },{ label: 'Kontak', href: '#kontak' },
-  ];
+  const navLinks = Array.isArray(cms?.nav_links) ? cms.nav_links : [];
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
@@ -86,11 +84,11 @@ export const Header: React.FC<HeaderProps> = ({
             href="#"
             id="header-logo"
             className="flex items-center gap-2 group focus-visible:outline-none"
-            aria-label="Nuzultrip Equity Beranda"
+            aria-label={cms?.logo_aria_label || ''}
           >
-            {logoUrl ? <img src={logoUrl} alt="Nuzultrip Equity" className="h-8 sm:h-9 w-auto max-w-[180px] object-contain transition-opacity group-hover:opacity-85" /> : <div className="flex items-baseline">
-              <span className="text-[20px] sm:text-[23px] font-extrabold tracking-tight text-white transition-opacity group-hover:opacity-85">Nuzultrip</span>
-              <span className="ml-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-400">Equity</span>
+            {logoUrl ? <img src={logoUrl} alt={cms?.logo_alt || ''} className="h-8 sm:h-9 w-auto max-w-[180px] object-contain transition-opacity group-hover:opacity-85" /> : <div className="flex items-baseline">
+              <span className="text-[20px] sm:text-[23px] font-extrabold tracking-tight text-white transition-opacity group-hover:opacity-85">{cms?.brand_name || ''}</span>
+              <span className="ml-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-400">{cms?.brand_suffix || ''}</span>
             </div>}
           </a>
 
@@ -118,7 +116,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className="inline-flex items-center gap-2 px-4 py-1.5 sm:py-2 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-300 text-[13px] sm:text-[13.5px] font-semibold transition-all duration-200 active:scale-98 shadow-xs group cursor-pointer backdrop-blur-sm"
               >
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>{cms?.login_label || 'Masuk'}</span>
+                <span>{cms?.login_label || ''}</span>
                 <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
               </button>
             ) : (
@@ -128,7 +126,7 @@ export const Header: React.FC<HeaderProps> = ({
                 onClick={onOpenLogin}
                 className="inline-flex items-center gap-2 px-4 py-1.5 sm:py-2 rounded-full bg-white/10 hover:bg-white/15 border border-white/15 text-white text-[13px] sm:text-[13.5px] font-semibold transition-all duration-200 active:scale-98 shadow-xs group cursor-pointer backdrop-blur-sm"
               >
-                <span>{cms?.login_label || 'Masuk'}</span>
+                <span>{cms?.login_label || ''}</span>
                 <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
               </button>
             )}
@@ -179,7 +177,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-[#0d151d] font-bold text-center flex items-center justify-center gap-2 active:scale-98 transition-all shadow-md cursor-pointer"
               >
                 <span className="w-2 h-2 rounded-full bg-[#0d151d] animate-ping" />
-                <span>{cms?.mobile_login_label || cms?.login_label || 'Masuk'}</span>
+                <span>{cms?.mobile_login_label || cms?.login_label || ''}</span>
                 <ArrowRight size={16} />
               </button>
             ) : (
@@ -192,7 +190,7 @@ export const Header: React.FC<HeaderProps> = ({
                   }}
                   className="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-[#0d151d] font-bold text-center flex items-center justify-center gap-2 active:scale-98 transition-all shadow-md cursor-pointer"
                 >
-                  <span>{cms?.mobile_interest_label || cms?.cta_primary || 'Ajukan Minat Equity'}</span>
+                  <span>{cms?.mobile_interest_label || cms?.cta_primary || ''}</span>
                   <ArrowRight size={16} />
                 </button>
 
@@ -204,7 +202,7 @@ export const Header: React.FC<HeaderProps> = ({
                   }}
                   className="w-full py-3 px-5 rounded-xl border border-white/20 text-white font-medium text-center hover:bg-white/10 transition-all cursor-pointer"
                 >
-                  {cms?.mobile_login_label || 'Masuk Portal (Investor / Admin)'}
+                  {cms?.mobile_login_label || ''}
                 </button>
               </>
             )}
