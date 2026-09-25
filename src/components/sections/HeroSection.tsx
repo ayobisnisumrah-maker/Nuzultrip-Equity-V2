@@ -107,11 +107,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
       <HeroScrollAtmosphere scrollY={scrollY} />
 
       {/* Running Announcement Ticker if enabled */}
-      {settings.showAnnouncement && settings.runningAnnouncement && (
+      {(cmsHome?.show_announcement ?? settings.showAnnouncement) && (cmsHome?.announcement || settings.runningAnnouncement) && (
         <div className="absolute top-20 left-0 right-0 z-20 bg-emerald-900/85 border-y border-emerald-500/30 backdrop-blur-md px-4 py-2 text-center overflow-hidden">
           <div className="flex items-center justify-center gap-2 text-xs text-emerald-200 font-medium animate-pulse">
             <Bell size={13} className="text-emerald-400 shrink-0" />
-            <span className="truncate max-w-3xl">{settings.runningAnnouncement}</span>
+            <span className="truncate max-w-3xl">{cmsHome?.announcement || settings.runningAnnouncement}</span>
           </div>
         </div>
       )}
@@ -156,7 +156,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             onClick={onOpenInterest}
             className="w-full sm:w-auto px-7 sm:px-8 py-3.5 rounded-full font-bold text-sm sm:text-base text-[#0d151d] bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 hover:from-emerald-300 hover:to-teal-400 active:scale-98 transition-all duration-200 shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2.5 cursor-pointer"
           >
-            <span>{settings.heroCtaPrimary || 'Ajukan Minat Equity'}</span>
+            <span>{cmsHome?.cta_primary || settings.heroCtaPrimary || 'Ajukan Minat Equity'}</span>
             <ArrowRight size={17} />
           </button>
 
@@ -168,7 +168,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             className="w-full sm:w-auto px-6 sm:px-7 py-3.5 rounded-full font-semibold text-sm sm:text-base text-slate-100 bg-white/10 hover:bg-white/15 border border-white/20 hover:border-white/30 active:scale-98 transition-all duration-200 backdrop-blur-md shadow-xs flex items-center justify-center gap-2.5 cursor-pointer"
           >
             <Download size={16} className="text-emerald-400" />
-            <span>{settings.heroCtaSecondary || 'Unduh Pitchdeck 2026'}</span>
+            <span>{cmsHome?.cta_secondary || settings.heroCtaSecondary || 'Unduh Pitchdeck'}</span>
           </button>
         </div>
 
@@ -181,17 +181,14 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           <div className="flex items-center justify-center gap-3 w-full max-w-md mb-2.5">
             <span className="h-px bg-gradient-to-r from-transparent via-white/15 to-transparent flex-1" />
             <span className="text-[10px] sm:text-[10.5px] font-bold text-emerald-400 uppercase tracking-[0.18em]">
-              Sorotan Ekosistem Investasi
+              {cmsHome?.highlights_label || 'Sorotan Ekosistem Investasi'}
             </span>
             <span className="h-px bg-gradient-to-r from-transparent via-white/15 to-transparent flex-1" />
           </div>
 
           {/* Compact Chips - Responsive & Compact like at the beginning */}
           <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 max-w-3xl">
-            {(settings.heroHighlights && settings.heroHighlights.length > 0
-              ? settings.heroHighlights
-              : DEFAULT_HIGHLIGHT_ITEMS
-            ).map((item, idx) => (
+            {(Array.isArray(cmsHome?.highlights) && cmsHome.highlights.length ? cmsHome.highlights : settings.heroHighlights && settings.heroHighlights.length ? settings.heroHighlights : DEFAULT_HIGHLIGHT_ITEMS).map((item:string, idx:number) => (
               <div
                 key={idx}
                 className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-emerald-500/40 text-slate-300 hover:text-white text-[11px] sm:text-[12px] font-medium transition-all shadow-xs"
@@ -212,7 +209,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           aria-hidden="true"
         >
           <span className="text-[9.5px] tracking-[0.2em] uppercase font-bold text-slate-400">
-            Scroll Eksplorasi
+            {cmsHome?.scroll_label || 'Scroll Eksplorasi'}
           </span>
           <ChevronDown size={13} className="text-emerald-400 animate-bounce" />
         </div>
