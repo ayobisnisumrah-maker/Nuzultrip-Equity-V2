@@ -4,9 +4,8 @@ import { Eyebrow } from '../ui/Eyebrow';
 import { ArrowButton } from '../ui/ArrowButton';
 import { AnimatedNumber } from '../ui/AnimatedNumber';
 import { EquityRoiCalculator } from '../equity/EquityRoiCalculator';
-import { EQUITY_METRICS, IMAGES, StatisticItem } from '../../data/landingData';
-import { realtimeStore, PortalSettings } from '../../services/realtimeStore';
-import { loadPublicHome } from '../../services/publicPortalService';
+import { IMAGES, StatisticItem } from '../../data/landingData';
+import { loadPublicHome, loadEquityCalculatorConfig } from '../../services/publicPortalService';
 import { supabase } from '../../lib/supabase';
 
 interface EquitySectionProps {
@@ -18,61 +17,23 @@ export const EquitySection: React.FC<EquitySectionProps> = ({
   onOpenInterest,
   onOpenDetail,
 }) => {
-  const [settings, setSettings] = useState<PortalSettings>(() =>
-    realtimeStore.getPortalSettings()
-  );
   const [cms, setCms] = useState<any>(null);
+  const [offering,setOffering]=useState<any>(null);
 
-  useEffect(()=>{let active=true;const sync=async()=>{try{const sections=await loadPublicHome();if(active)setCms(sections.find((s)=>s.anchorId==='ringkasan')?.content||null)}catch{}};void sync();const channel=supabase?.channel('public-ringkasan-cms').on('postgres_changes',{event:'*',schema:'public',table:'portal_sections'},()=>void sync()).on('postgres_changes',{event:'*',schema:'public',table:'portal_section_versions'},()=>void sync()).subscribe();return()=>{active=false;if(channel&&supabase)void supabase.removeChannel(channel)}},[]);
+  useEffect(()=>{let active=true;const sync=async()=>{try{const [sections,config]=await Promise.all([loadPublicHome(),loadEquityCalculatorConfig()]);if(active){setCms(sections.find((s)=>s.anchorId==='ringkasan')?.content||null);setOffering(config||null)}}catch{}};void sync();const channel=supabase?.channel('public-ringkasan-cms').on('postgres_changes',{event:'*',schema:'public',table:'portal_sections'},()=>void sync()).on('postgres_changes',{event:'*',schema:'public',table:'portal_section_versions'},()=>void sync()).on('postgres_changes',{event:'*',schema:'public',table:'ownership_offerings'},()=>void sync()).subscribe();return()=>{active=false;if(channel&&supabase)void supabase.removeChannel(channel)}},[]);
 
-  useEffect(() => {
-    const update = () => {
-      setSettings(realtimeStore.getPortalSettings());
-    };
-    const unsub = realtimeStore.subscribe(update);
-    return () => unsub();
-  }, []);
-
+  const equityPercentage=Number(offering?.equityPercentage||0);
+  const totalUnits=Number(offering?.totalUnits||0);
+  const unitOwnership=Number(offering?.unitOwnershipPercentage||0);
+  const pricePerUnit=Number(offering?.pricePerUnit||0);
+  const cadenceMonths=Number(offering?.distributionCadenceMonths||0);
   const dynamicMetrics: StatisticItem[] = [
-    {
-      id: 'porsi-ditawarkan',
-      value: settings.equityPercentage || 40,
-      suffix: '%',
-      label: 'Porsi kepemilikan yang ditawarkan',
-    },
-    {
-      id: 'total-unit',
-      value: settings.totalUnits || 50,
-      suffix: ' Unit',
-      label: 'Total unit equity yang ditawarkan',
-    },
-    {
-      id: 'porsi-per-unit',
-      value: Number(((settings.equityPercentage || 40) / (settings.totalUnits || 50)).toFixed(2)),
-      suffix: '%',
-      decimals: 1,
-      label: 'Porsi kepemilikan per unit',
-    },
-    {
-      id: 'nilai-per-unit',
-      value: Math.round((settings.pricePerUnit || 100000000) / 1000000),
-      prefix: 'Rp.',
-      suffix: ' Juta',
-      label: 'Nilai per unit equity',
-    },
-    {
-      id: 'total-nilai',
-      value: Number((((settings.totalUnits || 50) * (settings.pricePerUnit || 100000000)) / 1000000000).toFixed(1)),
-      prefix: 'Rp.',
-      suffix: ' Miliar',
-      label: 'Total Nilai Penawaran',
-    },
-    {
-      id: 'periode-distribusi',
-      value: 0,
-      customDisplay: 'Bulanan',
-      label: 'Periode distribusi hasil',
-    },
+    {id:'porsi-ditawarkan',value:equityPercentage,suffix:'%',label:cms?.metric_equity_label||'Porsi kepemilikan yang ditawarkan'},
+    {id:'total-unit',value:totalUnits,suffix:' Unit',label:cms?.metric_units_label||'Total unit equity yang ditawarkan'},
+    {id:'porsi-per-unit',value:unitOwnership,suffix:'%',decimals:1,label:cms?.metric_unit_share_label||'Porsi kepemilikan per unit'},
+    {id:'nilai-per-unit',value:pricePerUnit/1000000,prefix:'Rp. ',suffix:' Juta',label:cms?.metric_price_label||'Nilai per unit equity'},
+    {id:'total-nilai',value:(totalUnits*pricePerUnit)/1000000000,prefix:'Rp. ',suffix:' Miliar',decimals:1,label:cms?.metric_total_label||'Total Nilai Penawaran'},
+    {id:'periode-distribusi',value:0,customDisplay:cadenceMonths?(`Setiap ${cadenceMonths} bulan`):'—',label:cms?.metric_distribution_label||'Periode distribusi hasil'},
   ];
   return (
     <section
