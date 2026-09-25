@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, Instagram, Facebook, Disc as TikTokIcon, Phone, Mail, MapPin, ShieldCheck } from 'lucide-react';
 import { Container } from './Container';
-import { realtimeStore, PortalSettings } from '../../services/realtimeStore';
 import { loadPublicHome } from '../../services/publicPortalService';
 import { supabase } from '../../lib/supabase';
 
@@ -14,9 +13,6 @@ interface FooterProps {
 export const Footer: React.FC<FooterProps> = ({
   onOpenDetail,
 }) => {
-  const [settings, setSettings] = useState<PortalSettings>(() =>
-    realtimeStore.getPortalSettings()
-  );
   const [logoUrl, setLogoUrl] = useState('');
   const [cms, setCms] = useState<any>(null);
 
@@ -28,18 +24,10 @@ export const Footer: React.FC<FooterProps> = ({
     return()=>{active=false;if(channel&&supabase)void supabase.removeChannel(channel)};
   }, []);
 
-  useEffect(() => {
-    const update = () => {
-      setSettings(realtimeStore.getPortalSettings());
-    };
-    const unsub = realtimeStore.subscribe(update);
-    return () => unsub();
-  }, []);
-
   const normalizeLinks=(value:any,fallback:string[])=>Array.isArray(value)&&value.length?value.map((x:any)=>typeof x==='string'?{label:x}:{label:String(x?.label||''),href:String(x?.href||'')}):fallback.map(label=>({label}));
   const tentangLinks=normalizeLinks(cms?.footer_about_links,['Model Bisnis','Ekosistem Bisnis','Perkembangan','Agen dan Kemitraan','Informasi','Ringkasan Penawaran','Pemegang Equity']);
   const infoLinks=normalizeLinks(cms?.footer_info_links,['Penggunaan Dana','Tata Kelola','Faktor Risiko','Mekanisme Hasil','Legal','Kebijakan Privasi','Syarat & Ketentuan','Risk Disclosure']);
-  const contactPhone=String(cms?.contact_phone||settings.contactPhone||'');
+  const contactPhone=String(cms?.contact_phone||'');
   const socials=cms?.socials||{};
 
   return (
@@ -52,7 +40,7 @@ export const Footer: React.FC<FooterProps> = ({
             <div>
               <div className="flex items-center mb-4">
                 {logoUrl ? <img src={logoUrl} alt="Nuzultrip Equity" className="h-10 sm:h-11 w-auto max-w-[220px] object-contain" /> : <>
-                  <span className="text-[24px] sm:text-[26px] font-extrabold tracking-tight text-white">{settings.companyName.split('(')[0].trim() || 'Nuzultrip'}</span>
+                  <span className="text-[24px] sm:text-[26px] font-extrabold tracking-tight text-white">{cms?.company_name || 'Nuzultrip'}</span>
                   <span className="ml-2 text-[10px] font-bold uppercase tracking-[0.16em] px-1.5 py-0.5 rounded bg-white/10 text-white/80 border border-white/15">Equity</span>
                 </>}
               </div>
@@ -63,12 +51,12 @@ export const Footer: React.FC<FooterProps> = ({
               <div className="mt-4 text-xs text-white/60 space-y-1.5">
                 <div className="flex items-start gap-2">
                   <MapPin size={13} className="text-emerald-400 shrink-0 mt-0.5" />
-                  <span className="leading-snug">{cms?.company_address || settings.companyAddress}</span>
+                  <span className="leading-snug">{cms?.company_address || ''}</span>
                 </div>
-                {(cms?.company_license || settings.companyLicensePpiu) && (
+                {cms?.company_license && (
                   <div className="flex items-start gap-2">
                     <ShieldCheck size={13} className="text-emerald-400 shrink-0 mt-0.5" />
-                    <span className="leading-snug">{cms?.company_license || settings.companyLicensePpiu}</span>
+                    <span className="leading-snug">{cms.company_license}</span>
                   </div>
                 )}
               </div>
@@ -175,7 +163,7 @@ export const Footer: React.FC<FooterProps> = ({
 
         {/* Bottom Bar: Copyright & Compliance */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[13px] text-white/50">
-          <p>{cms?.footer_copyright || settings.footerCopyright || '© 2026 PT. Swarna Dipa Wisata. All Rights Reserved.'}</p>
+          <p>{cms?.footer_copyright || ''}</p>
           <div className="flex items-center gap-4 text-center sm:text-right">
             <span>{cms?.footer_bottom_text || 'Platform Penawaran Equity Ekosistem Perjalanan Muslim Indonesia.'}</span>
           </div>
