@@ -26,6 +26,11 @@ export type EquityCalculatorConfig = {
   unitPrice:number;
   ownershipPerUnit:number;
   maxUnits:number;
+  equityPercentage:number;
+  totalUnits:number;
+  unitOwnershipPercentage:number;
+  pricePerUnit:number;
+  distributionCadenceMonths:number;
   eyebrow?:string;
   title?:string;
   subtitle?:string;
@@ -37,7 +42,7 @@ export type EquityCalculatorConfig = {
 export async function loadEquityCalculatorConfig():Promise<EquityCalculatorConfig|null>{
   if(!supabase)return null;
   const [{data:offering,error:offeringError},{data:section,error:sectionError}]=await Promise.all([
-    supabase.from('ownership_offerings').select('unit_price,unit_ownership_bps,total_units').eq('status','open').order('effective_from',{ascending:false}).limit(1).maybeSingle(),
+    supabase.from('ownership_offerings').select('unit_price,unit_ownership_bps,total_units,total_offered_bps,distribution_cadence_months').eq('status','open').order('effective_from',{ascending:false}).limit(1).maybeSingle(),
     supabase.from('portal_sections').select('published_version:portal_section_versions!portal_sections_published_version_id_fkey(content)').eq('anchor_id','kalkulator-equity').eq('status','published').eq('is_visible',true).maybeSingle()
   ]);
   if(offeringError)throw offeringError;
@@ -48,6 +53,11 @@ export async function loadEquityCalculatorConfig():Promise<EquityCalculatorConfi
     unitPrice:Number((offering as any).unit_price),
     ownershipPerUnit:Number((offering as any).unit_ownership_bps)/100,
     maxUnits:Math.min(Number(content.maxUnitsPerSimulation||25),Number((offering as any).total_units)),
+    equityPercentage:Number((offering as any).total_offered_bps)/100,
+    totalUnits:Number((offering as any).total_units),
+    unitOwnershipPercentage:Number((offering as any).unit_ownership_bps)/100,
+    pricePerUnit:Number((offering as any).unit_price),
+    distributionCadenceMonths:Number((offering as any).distribution_cadence_months||0),
     eyebrow:content.eyebrow,
     title:content.title,
     subtitle:content.subtitle,
