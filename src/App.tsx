@@ -23,8 +23,17 @@ import { SuperAdminDashboard } from './components/admin/SuperAdminDashboard';
 import { ServiceItem, InvestorInfoItem, ArticleItem } from './data/landingData';
 import { resolveSessionAccess, secureLogout, type SessionAccess } from './services/sessionAccessService';
 import { supabase } from './lib/supabase';
+import { loadPublicHome } from './services/publicPortalService';
 
 export default function App() {
+  useEffect(() => {
+    let active=true;
+    const syncBrand=async()=>{try{const sections=await loadPublicHome();const home=sections.find((s)=>s.anchorId==='beranda');if(!active)return;const favicon=String(home?.content?.favicon_url||'');if(favicon){let link=document.querySelector<HTMLLinkElement>("link[rel~='icon']");if(!link){link=document.createElement('link');link.rel='icon';document.head.appendChild(link)}link.href=favicon}}catch{}};
+    void syncBrand();
+    const channel=supabase?.channel('public-browser-brand').on('postgres_changes',{event:'*',schema:'public',table:'portal_sections'},()=>void syncBrand()).on('postgres_changes',{event:'*',schema:'public',table:'portal_section_versions'},()=>void syncBrand()).subscribe();
+    return()=>{active=false;if(channel&&supabase)void supabase.removeChannel(channel)};
+  }, []);
+
   useEffect(() => {
     if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
     if (window.location.hash) {
